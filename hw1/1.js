@@ -17,7 +17,7 @@ function world() {
     let dx = 512;
     let dy = 200;
     let dz = 2000;
-
+    const origY = dy
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivity = parseFloat(slider4.value) * 0.001;
 
@@ -67,6 +67,11 @@ function world() {
         { x: 300, y:   0, z: -300 },
         { x:   0, y:   0, z: -300 },           
     ];
+
+    let isJumping = false;
+    const jumpHeight = 100; // Max height of the jump
+    const jumpSpeed = 5;    // Speed of the jump
+    let crouch = false;
 
     function renderScene() {
         const context = canvas.getContext('2d');
@@ -186,9 +191,22 @@ function world() {
 
     document.addEventListener('keydown', (event) => {
         if (!event.repeat) {
-            keysPressed[event.key] = true; // Track key press only once
+            keysPressed[event.key] = true; 
+    
+            if (event.key === ' ') {
+                crouch = false; // Reset crouch state if jumping
+                ego.y = origY;  
+                initiateJump();
+            }
+    
+            if (event.key === 'c') { 
+                crouch = !crouch;
+                ego.y = crouch ? origY * 1.5 : origY; 
+            }
         }
     });
+    
+    
 
     document.addEventListener('keyup', (event) => {
         keysPressed[event.key] = false; // Immediately stop movement on key release
@@ -209,11 +227,14 @@ function world() {
     }
 
     function updateMovement() {
-        pace = keysPressed['Shift'] ? 30 : 10;
+        
+        pace = keysPressed['ShiftLeft'] ? 10 : 5;   
+        
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
 
-        // Move forward and backward along the camera direction (W and S keys)
+        // Correct movement directions based on your previous logic
+        // Move right and left along the camera direction (D and A keys)
         if (keysPressed['d']) {
             ego.x += pace * cosYaw; 
             ego.z += pace * sinYaw;
@@ -223,7 +244,7 @@ function world() {
             ego.z -= pace * sinYaw;
         }
 
-        // Move left and right perpendicular to the camera direction (A and D keys)
+        // Move forward and backward perpendicular to the camera direction (W and S keys)
         if (keysPressed['w']) {
             ego.x += pace * sinYaw; 
             ego.z -= pace * cosYaw;
@@ -235,6 +256,25 @@ function world() {
 
         renderScene(); // Sync rendering with all updates including mouse movement
         requestAnimationFrame(updateMovement); // Continuously call updateMovement
+    }
+
+    function initiateJump() {
+        if (isJumping) return; // Prevent another jump while already jumping
+        isJumping = true;
+        let jumpProgress = 0;
+        const originalY = ego.y;
+
+        function jumpAnimation() {
+            if (jumpProgress < 1) {
+                ego.y = originalY - jumpHeight * Math.sin(Math.PI * jumpProgress); // Create a smooth jump arc
+                jumpProgress += 0.0125; // Increment the jump progress
+                requestAnimationFrame(jumpAnimation);
+            } else {
+                ego.y = originalY; // Reset to original position after the jump
+                isJumping = false; // Allow new jumps
+            }
+        }
+        jumpAnimation();
     }
     
     requestAnimationFrame(updateMovement); // Start the animation loop
