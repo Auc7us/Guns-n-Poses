@@ -149,7 +149,7 @@ function world() {
                 }
             });
             context.closePath();
-            let baseColor = dy - 384 <= 0 ? '#909090' : '#303030';
+            let baseColor = dy - 384 <= 0 ? '#909090' : '#202020';
 
             context.fillStyle = baseColor;
             context.fill();
@@ -210,10 +210,28 @@ function world() {
 
     function updateMovement() {
         pace = keysPressed['Shift'] ? 30 : 10;
-        if (keysPressed['d']) ego.x += pace; 
-        if (keysPressed['a']) ego.x -= pace;
-        if (keysPressed['s']) ego.z += pace; 
-        if (keysPressed['w']) ego.z -= pace;
+        const cosYaw = Math.cos(yaw);
+        const sinYaw = Math.sin(yaw);
+
+        // Move forward and backward along the camera direction (W and S keys)
+        if (keysPressed['d']) {
+            ego.x += pace * cosYaw; 
+            ego.z += pace * sinYaw;
+        }
+        if (keysPressed['a']) {
+            ego.x -= pace * cosYaw; 
+            ego.z -= pace * sinYaw;
+        }
+
+        // Move left and right perpendicular to the camera direction (A and D keys)
+        if (keysPressed['w']) {
+            ego.x += pace * sinYaw; 
+            ego.z -= pace * cosYaw;
+        }
+        if (keysPressed['s']) {
+            ego.x -= pace * sinYaw; 
+            ego.z += pace * cosYaw;
+        }
 
         renderScene(); // Sync rendering with all updates including mouse movement
         requestAnimationFrame(updateMovement); // Continuously call updateMovement
