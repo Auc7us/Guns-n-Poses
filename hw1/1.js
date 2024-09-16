@@ -109,11 +109,13 @@ function world() {
         }
 
         function drawGroundSegments() {
-            // Calculate the number of segments to render based on the camera's z-position
-            const startIndex = Math.floor(ego.z / -1024) - 1; // Start rendering one segment before the current
-            const segmentsToRender = 5; // Render five segments: two before, current, and two after
+            // Render fewer segments in front and behind based on the camera's current z-position
+            const startIndex = Math.floor(ego.z / -1024) - 1; // Start one segment behind the current
+            const segmentsBehind = 4; // Number of segments to render behind the screen
+            const segmentsInFront = 4; // Number of segments to render in front of the screen
 
-            for (let i = startIndex; i < startIndex + segmentsToRender; i++) {
+            for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
+                if (i < 0) continue; // Skip negative indices
                 const translatedBase = translateObj(base, 0, 0, -1024 * i);
                 const translatedGrid = translateObj(grid, 0, 0, -1024 * i);
                 const projectedBase = translatedBase.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
