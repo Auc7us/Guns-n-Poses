@@ -17,7 +17,7 @@ function world() {
     let dx = 512;
     let dy = 200;
     let dz = 2000;
-    const origY = dy
+    const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivity = parseFloat(slider4.value) * 0.001;
 
@@ -85,13 +85,13 @@ function world() {
 
         const cam2scrn = 2000;
 
-        function translateCube(cube, x1, y1, z1) {
-            return cube.map(point => ({
+        function translateObj(obj, x1, y1, z1) {
+            return obj.map(point => ({
                 x: point.x + x1,
                 y: point.y + y1,
                 z: point.z + z1
             }));
-        }      
+        }
 
         function projectPoint(point, camera) {
             const cosYaw = Math.cos(yaw);
@@ -108,77 +108,90 @@ function world() {
             return { x: xProjected, y: yProjected };
         }
 
-        const projectedBase = base.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-        const projectedGrid = grid.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-        const translatedCube = translateCube(cube, 362, 84, -362);
+        function drawGroundSegments() {
+            // Calculate the number of segments to render based on the camera's z-position
+            const startIndex = Math.floor(ego.z / -1024) - 1; // Start rendering one segment before the current
+            const segmentsToRender = 5; // Render five segments: two before, current, and two after
+
+            for (let i = startIndex; i < startIndex + segmentsToRender; i++) {
+                const translatedBase = translateObj(base, 0, 0, -1024 * i);
+                const translatedGrid = translateObj(grid, 0, 0, -1024 * i);
+                const projectedBase = translatedBase.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+                const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+                
+                if (projectedBase.length > 0 && projectedGrid.length > 0) {
+                    drawWarpedBase(projectedBase, projectedGrid);
+                }
+            }
+        }
+
+        drawGroundSegments();
+
+        const translatedCube = translateObj(cube, 362, 84, -362);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
 
-        function drawCube() {
-            if (projectedCube.length < 2) return; 
-            const flippedCubeCorners = projectedCube.map(point => ({
-                x: point.x,
-                y: canvas.height - point.y
-            }));
+        drawCube(projectedCube);
+    }
 
-            context.beginPath();
-            context.moveTo(flippedCubeCorners[0].x, flippedCubeCorners[0].y);
-            flippedCubeCorners.forEach((point, index) => {
-                if (index > 0) {
-                    context.lineTo(point.x, point.y);
-                }
-            });
-            context.closePath(); 
-            context.strokeStyle = 'red';
-            context.lineWidth = 2;
-            context.stroke();
-        }
+    function drawCube(projectedCube) {
+        if (projectedCube.length < 2) return; 
+        const context = canvas.getContext('2d');
+        const flippedCubeCorners = projectedCube.map(point => ({
+            x: point.x,
+            y: canvas.height - point.y
+        }));
 
-        function drawWarpedBase() {
-            if (projectedBase.length < 2 || projectedGrid.length < 2) return;
+        context.beginPath();
+        context.moveTo(flippedCubeCorners[0].x, flippedCubeCorners[0].y);
+        flippedCubeCorners.forEach((point, index) => {
+            if (index > 0) {
+                context.lineTo(point.x, point.y);
+            }
+        });
+        context.closePath(); 
+        context.strokeStyle = 'red';
+        context.lineWidth = 2;
+        context.stroke();
+    }
 
-            const flippedBaseCorners = projectedBase.map(point => ({
-                x: point.x,
-                y: canvas.height - point.y
-            }));
+    function drawWarpedBase(projectedBase, projectedGrid) {
+        if (projectedBase.length < 2 || projectedGrid.length < 2) return;
 
-            const flippedGridCorners = projectedGrid.map(point => ({
-                x: point.x,
-                y: canvas.height - point.y
-            }));
+        const context = canvas.getContext('2d');
+        const flippedBaseCorners = projectedBase.map(point => ({
+            x: point.x,
+            y: canvas.height - point.y
+        }));
 
-            context.beginPath();
-            context.moveTo(flippedBaseCorners[0].x, flippedBaseCorners[0].y);
-            flippedBaseCorners.forEach((point, index) => {
-                if (index > 0) {
-                    context.lineTo(point.x, point.y);
-                }
-            });
-            context.closePath();
-            let baseColor = dy - 384 <= 0 ? '#909090' : '#202020';
+        const flippedGridCorners = projectedGrid.map(point => ({
+            x: point.x,
+            y: canvas.height - point.y
+        }));
 
-            context.fillStyle = baseColor;
-            context.fill();
+        context.beginPath();
+        context.moveTo(flippedBaseCorners[0].x, flippedBaseCorners[0].y);
+        flippedBaseCorners.forEach((point, index) => {
+            if (index > 0) {
+                context.lineTo(point.x, point.y);
+            }
+        });
+        context.closePath();
+        let baseColor = dy - 384 <= 0 ? '#909090' : '#202020';
 
-            context.beginPath();
-            flippedGridCorners.forEach((point, index) => {
-                if (index === 0) {
-                    context.moveTo(point.x, point.y);
-                } else {
-                    context.lineTo(point.x, point.y);
-                }
-            });
-            context.closePath();
-            context.strokeStyle = 'black';
-            context.stroke();
-        }
+        context.fillStyle = baseColor;
+        context.fill();
 
-        if (dy - 384 <= 0) {
-            drawWarpedBase();
-            drawCube();
-        } else {
-            drawCube();
-            drawWarpedBase();
-        }
+        context.beginPath();
+        flippedGridCorners.forEach((point, index) => {
+            if (index === 0) {
+                context.moveTo(point.x, point.y);
+            } else {
+                context.lineTo(point.x, point.y);
+            }
+        });
+        context.closePath();
+        context.strokeStyle = 'black';
+        context.stroke();
     }
 
     canvas.addEventListener('mousemove', (event) => {
@@ -205,8 +218,6 @@ function world() {
             }
         }
     });
-    
-    
 
     document.addEventListener('keyup', (event) => {
         keysPressed[event.key] = false; // Immediately stop movement on key release
@@ -227,8 +238,7 @@ function world() {
     }
 
     function updateMovement() {
-        
-        pace = keysPressed['ShiftLeft'] ? 10 : 5;   
+        pace = keysPressed['Shift'] ? 10 : 5;   
         
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -282,7 +292,7 @@ function world() {
     slider4.addEventListener("input", () => {
         mouseSensitivity = parseFloat(slider4.value) * 0.001; 
     });
-    
+
     renderScene(); 
 }
 
