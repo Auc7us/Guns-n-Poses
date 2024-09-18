@@ -6,12 +6,12 @@ function world() {
         return;
     }
 
-    var slider4 = document.getElementById('slider4');
-    if (!slider4) {
+    var slider1 = document.getElementById('slider1');
+    if (!slider1) {
         console.error('Slider element not found!');
         return;
     }
-    slider4.value = 5;
+    slider1.value = 3;
     let usePointer = 0;
     let yaw = 0; // Initial yaw value in radians
     let pitch = -0.13; // Initial pitch value in radians
@@ -248,7 +248,7 @@ function world() {
         yaw += deltaX * mouseSensitivity; // Update yaw based on sensitivity
 
         // Update pitch and clamp within limits
-        pitch -= deltaY * mouseSensitivity * 0.5; 
+        pitch -= deltaY * mouseSensitivity; 
         if (pitch > pitchLimit) pitch = pitchLimit;
         if (pitch < -pitchLimit) pitch = -pitchLimit;
     });
@@ -353,7 +353,7 @@ function world() {
         if (document.pointerLockElement === canvas) {
             console.log('Pointer locked');
             usePointer = 1;
-            mouseSensitivity = parseFloat(slider4.value) * mouseSensitivityConst;
+            mouseSensitivity = parseFloat(slider1.value) * mouseSensitivityConst;
         } else {
             console.log('Pointer unlocked');
             usePointer = 0;
