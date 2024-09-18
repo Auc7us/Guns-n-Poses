@@ -11,15 +11,18 @@ function world() {
         console.error('Slider element not found!');
         return;
     }
-    slider4.value = 2;
-
+    slider4.value = 5;
+    let usePointer = 0;
     let yaw = 0; // Initial yaw value in radians
+    let pitch = -0.13; // Initial pitch value in radians
     let dx = 512;
-    let dy = 200;
+    let dy = 100;
     let dz = 2000;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
-    let mouseSensitivity = parseFloat(slider4.value) * 0.001;
+    let mouseSensitivityConst = 0.001;
+    let mouseSensitivity = 0;
+    const pitchLimit = Math.PI / 3 - 0.01; // Limit the pitch angle to prevent flipping
 
     const base = [
         { x: 0, y: 384, z: 0 },        
@@ -111,14 +114,24 @@ function world() {
         function projectPoint(point, camera) {
             const cosYaw = Math.cos(yaw);
             const sinYaw = Math.sin(yaw);
+            const cosPitch = Math.cos(pitch);
+            const sinPitch = Math.sin(pitch);
+
             const translatedX = point.x - camera.x;
             const translatedZ = point.z - camera.z;
+            const translatedY = point.y - camera.y;
+
+            // Rotate point based on yaw (left-right rotation)
             const rotatedX = translatedX * cosYaw + translatedZ * sinYaw;
             const rotatedZ = -translatedX * sinYaw + translatedZ * cosYaw;
 
-            if (rotatedZ >= 0) return null;
-            const xProjected = -(rotatedX * cam2scrn) / rotatedZ + canvas.width / 2;
-            const yProjected = camera.y + ((point.y - camera.y) * cam2scrn) / rotatedZ;
+            // Rotate point based on pitch (up-down rotation)
+            const rotatedY = translatedY * cosPitch - rotatedZ * sinPitch;
+            const finalZ = rotatedY * sinPitch + rotatedZ * cosPitch;
+
+            if (finalZ >= 0) return null;
+            const xProjected = -(rotatedX * cam2scrn) / finalZ + canvas.width / 2;
+            const yProjected = camera.y + ((rotatedY - camera.y) * cam2scrn) / finalZ;
 
             return { x: xProjected, y: yProjected };
         }
@@ -142,11 +155,11 @@ function world() {
             }
         }
 
-        function drawFixedImage() {
-            const imgWidth = 450; // Adjust width of the gun image
-            const imgHeight = 265; // Adjust height of the gun image
-            const posX = canvas.width - imgWidth - 200; // Position image on the right side
-            const posY = canvas.height - imgHeight - 0; // Position image on the bottom side
+        function drawGun() {
+            const imgWidth = 350; // Adjust width of the gun image
+            const imgHeight = 163; // Adjust height of the gun image
+            const posX = canvas.width / 2 - imgWidth / 3; // Position image on the right side
+            const posY = canvas.height - imgHeight; // Position image on the bottom side
             
             // Draw the image if it's loaded
             if (gunImageLoaded) {
@@ -163,7 +176,7 @@ function world() {
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
 
         drawCube(projectedCube); // Draw cube
-        drawFixedImage(); // Draw the gun image last to keep it on top
+        drawGun(); // Draw the gun image last to keep it on top
     }
 
     function drawCube(projectedCube) {
@@ -227,9 +240,17 @@ function world() {
         context.stroke();
     }
 
+    // Handle mouse movement after pointer lock is enabled
     canvas.addEventListener('mousemove', (event) => {
         const deltaX = event.movementX;
+        const deltaY = event.movementY;
+
         yaw += deltaX * mouseSensitivity; // Update yaw based on sensitivity
+
+        // Update pitch and clamp within limits
+        pitch -= deltaY * mouseSensitivity * 0.5; 
+        if (pitch > pitchLimit) pitch = pitchLimit;
+        if (pitch < -pitchLimit) pitch = -pitchLimit;
     });
 
     const keysPressed = {};
@@ -247,7 +268,7 @@ function world() {
     
             if (event.key === 'c') { 
                 crouch = !crouch;
-                ego.y = crouch ? origY * 1.5 : origY; 
+                ego.y = crouch ? origY * 1.2 : origY; 
             }
         }
     });
@@ -321,10 +342,25 @@ function world() {
     }
     
     requestAnimationFrame(updateMovement); // Start the animation loop
+
     
-    slider4.addEventListener("input", () => {
-        mouseSensitivity = parseFloat(slider4.value) * 0.001; 
+    // Request pointer lock on canvas click
+    canvas.addEventListener('click', () => {
+        canvas.requestPointerLock();
     });
+
+    document.addEventListener('pointerlockchange', () => {
+        if (document.pointerLockElement === canvas) {
+            console.log('Pointer locked');
+            usePointer = 1;
+            mouseSensitivity = parseFloat(slider4.value) * mouseSensitivityConst;
+        } else {
+            console.log('Pointer unlocked');
+            usePointer = 0;
+            mouseSensitivity = 0;
+        }
+    });
+    
 
     renderScene(); 
 }
