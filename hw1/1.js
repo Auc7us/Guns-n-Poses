@@ -68,6 +68,20 @@ function world() {
         { x:   0, y:   0, z: -300 },           
     ];
 
+    // Load the gun image
+    const gunImage = new Image();
+    gunImage.src = 'gun.png'; // Ensure this path is correct
+    let gunImageLoaded = false;
+
+    gunImage.onload = () => {
+        gunImageLoaded = true;
+        console.log("Gun image loaded successfully."); // Debug message
+    };
+
+    gunImage.onerror = () => {
+        console.error("Failed to load gun image. Check the path:", gunImage.src); // Error log
+    };
+
     let isJumping = false;
     const jumpHeight = 100; // Max height of the jump
     const jumpSpeed = 5;    // Speed of the jump
@@ -79,7 +93,8 @@ function world() {
             console.error('Failed to get canvas context!');
             return;
         }
-        canvas.width = canvas.width; // Clear the canvas
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -127,12 +142,28 @@ function world() {
             }
         }
 
+        function drawFixedImage() {
+            const imgWidth = 450; // Adjust width of the gun image
+            const imgHeight = 265; // Adjust height of the gun image
+            const posX = canvas.width - imgWidth - 200; // Position image on the right side
+            const posY = canvas.height - imgHeight - 0; // Position image on the bottom side
+            
+            // Draw the image if it's loaded
+            if (gunImageLoaded) {
+                context.drawImage(gunImage, posX, posY, imgWidth, imgHeight);
+                console.log("Drawing gun image at:", posX, posY); // Debug message
+            } else {
+                console.warn("Gun image not loaded yet."); // Warning message
+            }
+        }
+        
         drawGroundSegments();
 
         const translatedCube = translateObj(cube, 362, 84, -362);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
 
-        drawCube(projectedCube);
+        drawCube(projectedCube); // Draw cube
+        drawFixedImage(); // Draw the gun image last to keep it on top
     }
 
     function drawCube(projectedCube) {
@@ -240,7 +271,7 @@ function world() {
     }
 
     function updateMovement() {
-        pace = keysPressed['Shift'] ? 10 : 5;   
+        pace = keysPressed['Shift'] ? 15 : 5;   
         
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -257,7 +288,7 @@ function world() {
         }
 
         // Move forward and backward perpendicular to the camera direction (W and S keys)
-        if (keysPressed['w']) {
+        if (keysPressed['w'] ) {
             ego.x += pace * sinYaw; 
             ego.z -= pace * cosYaw;
         }
