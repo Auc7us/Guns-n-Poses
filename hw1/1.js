@@ -271,7 +271,7 @@ function world() {
     }
 
     function updateMovement() {
-        pace = keysPressed['Shift'] ? 15 : 5;   
+        pace = keysPressed['Shift'] ? 30 : 15;   
         
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -310,7 +310,7 @@ function world() {
         function jumpAnimation() {
             if (jumpProgress < 1) {
                 ego.y = originalY - jumpHeight * Math.sin(Math.PI * jumpProgress); // Create a smooth jump arc
-                jumpProgress += 0.0125; // Increment the jump progress
+                jumpProgress += 0.018; // Increment the jump progress
                 requestAnimationFrame(jumpAnimation);
             } else {
                 ego.y = originalY; // Reset to original position after the jump
