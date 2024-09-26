@@ -76,6 +76,29 @@ function world() {
         { x:   0, y:   0, z: -4000 },           
     ];
 
+    const bullet = [
+        { x:   0, y:   0, z:   0 },       
+        { x:   9, y:   0, z:   0 },
+        { x:   9, y:   9, z:   0 },
+        { x:   0, y:   9, z:   0 },
+        { x:   0, y:   0, z:   0 },      
+        
+        { x:   0, y:   0, z:  -57 },
+        { x:   0, y:   9, z:  -57 },
+        { x:   0, y:   9, z:   0 }, 
+        
+        { x:   9, y:   9, z:   0 },
+        { x:   9, y:   9, z:  -57 },
+        { x:   0, y:   9, z:  -57 }, 
+        
+        { x:   9, y:   9, z:  -57 },
+        { x:   9, y:   0, z:  -57 },
+        { x:   9, y:   0, z:   0 }, 
+
+        { x:   9, y:   0, z:  -57 },
+        { x:   0, y:   0, z:  -57 },           
+    ];
+
     // Load the gun image
     const gunImage = new Image();
     gunImage.src = 'gun.png'; // Ensure this path is correct
@@ -185,14 +208,15 @@ function world() {
         drawGroundSegments();
 
         const translatedCube = translateObj(cube, 0, -2000, 0);
-        // const translatedCube = translateObj(cube, 362, 84, -362);
+        const translatedBullet = translateObj(bullet, 0, -2000, 0);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-
-        drawCube(projectedCube); // Draw cube
+        const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+        drawObj(projectedCube, "red"); // Draw cube
+        drawObj(projectedBullet, "green"); // Draw cube
         drawGun(); // Draw the gun image last to keep it on top
     }
 
-    function drawCube(projectedCube) {
+    function drawObj(projectedCube, objColor) {
         if (projectedCube.length < 2) return; 
         const context = canvas.getContext('2d');
         const flippedCubeCorners = projectedCube.map(point => ({
@@ -208,7 +232,7 @@ function world() {
             }
         });
         context.closePath(); 
-        context.strokeStyle = 'red';
+        context.strokeStyle = objColor;
         context.lineWidth = 2;
         context.stroke();
     }
