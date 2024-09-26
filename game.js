@@ -7,17 +7,22 @@ function world() {
     }
 
     var slider1 = document.getElementById('slider1');
-    if (!slider1) {
+    var fovSlider = document.getElementById('fovSlider');
+    
+
+    if (!slider1 || !fovSlider) {
         console.error('Slider element not found!');
         return;
     }
+
     slider1.value = 3;
+    fovSlider.value = 65;
     let usePointer = 0;
     let yaw = 0; // Initial yaw value in radians
-    let pitch = -0.13; // Initial pitch value in radians
-    let dx = 512;
+    let pitch = -0.13//-0.13; // Initial pitch value in radians
+    let dx = 800;
     let dy = 100;
-    let dz = 2000;
+    let dz = 5000;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
@@ -25,50 +30,50 @@ function world() {
     const pitchLimit = Math.PI / 3 - 0.01; // Limit the pitch angle to prevent flipping
 
     const base = [
-        { x: 0, y: 384, z: 0 },        
-        { x: 1024, y: 384, z: 0 },     
-        { x: 1024, y: 384, z: -1024 }, 
-        { x: 0, y: 384, z: -1024 }     
+        { x: 0, y: 2000, z: 0 },        
+        { x: 4000, y: 2000, z: 0 },     
+        { x: 4000, y: 2000, z: -4000 }, 
+        { x: 0, y: 2000, z: -4000 }     
     ];
 
     const grid = [
-        { x: 1024, y: 384, z: 0 },
-        { x: 768, y: 384, z: 0 },
-        { x: 768, y: 384, z: -1024 },     
-        { x: 512, y: 384, z: -1024 },
-        { x: 512, y: 384, z: 0 },     
-        { x: 256, y: 384, z: 0 }, 
-        { x: 256, y: 384, z: -1024 },  
-        { x: 0, y: 384, z: -1024 },      
-        { x: 0, y: 384, z: -256 },
-        { x: 1024, y: 384, z: -256 },
-        { x: 1024, y: 384, z: -512 },
-        { x: 0, y: 384, z: -512 },
-        { x: 0, y: 384, z: -768 },
-        { x: 1024, y: 384, z: -768 }     
+        { x: 4000, y: 2000, z: 0 },
+        { x: 3000, y: 2000, z: 0 },
+        { x: 3000, y: 2000, z: -4000 },     
+        { x: 2000, y: 2000, z: -4000 },
+        { x: 2000, y: 2000, z: 0 },     
+        { x: 1000, y: 2000, z: 0 }, 
+        { x: 1000, y: 2000, z: -4000 },  
+        { x: 0, y: 2000, z: -4000 },      
+        { x: 0, y: 2000, z: -1000 },
+        { x: 4000, y: 2000, z: -1000 },
+        { x: 4000, y: 2000, z: -2000 },
+        { x: 0, y: 2000, z: -2000 },
+        { x: 0, y: 2000, z: -3000 },
+        { x: 4000, y: 2000, z: -3000 }     
     ];
 
     const cube = [
         { x:   0, y:   0, z:   0 },       
-        { x: 300, y:   0, z:   0 },
-        { x: 300, y: 300, z:   0 },
-        { x:   0, y: 300, z:   0 },
+        { x: 4000, y:   0, z:   0 },
+        { x: 4000, y: 4000, z:   0 },
+        { x:   0, y: 4000, z:   0 },
         { x:   0, y:   0, z:   0 },      
         
-        { x:   0, y:   0, z: -300 },
-        { x:   0, y: 300, z: -300 },
-        { x:   0, y: 300, z:    0 }, 
+        { x:   0, y:   0, z: -4000 },
+        { x:   0, y: 4000, z: -4000 },
+        { x:   0, y: 4000, z:    0 }, 
         
-        { x: 300, y: 300, z:    0 },
-        { x: 300, y: 300, z: -300 },
-        { x:   0, y: 300, z: -300 }, 
+        { x: 4000, y: 4000, z:    0 },
+        { x: 4000, y: 4000, z: -4000 },
+        { x:   0, y: 4000, z: -4000 }, 
         
-        { x: 300, y: 300, z: -300 },
-        { x: 300, y:   0, z: -300 },
-        { x: 300, y:   0, z:    0 }, 
+        { x: 4000, y: 4000, z: -4000 },
+        { x: 4000, y:   0, z: -4000 },
+        { x: 4000, y:   0, z:    0 }, 
 
-        { x: 300, y:   0, z: -300 },
-        { x:   0, y:   0, z: -300 },           
+        { x: 4000, y:   0, z: -4000 },
+        { x:   0, y:   0, z: -4000 },           
     ];
 
     // Load the gun image
@@ -86,9 +91,16 @@ function world() {
     };
 
     let isJumping = false;
-    const jumpHeight = 100; // Max height of the jump
+    const jumpHeight = 300; // Max height of the jump
     const jumpSpeed = 5;    // Speed of the jump
     let crouch = false;
+
+    let cam2scrn = 1043;
+
+    function calculateDistance(fov) {
+        const fovRadians = (fov * Math.PI) / 180; // Convert FOV to radians
+        return (1600 / (2 * Math.tan(fovRadians / 2))).toFixed(2); // Calculate distance in mm, based on screen width
+    }
 
     function renderScene() {
         const context = canvas.getContext('2d');
@@ -101,7 +113,7 @@ function world() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        const cam2scrn = 2000;
+        cam2scrn = calculateDistance(fovSlider.value)
 
         function translateObj(obj, x1, y1, z1) {
             return obj.map(point => ({
@@ -138,14 +150,14 @@ function world() {
 
         function drawGroundSegments() {
             // Render fewer segments in front and behind based on the camera's current z-position
-            const startIndex = Math.floor(ego.z / -1024) - 1; // Start one segment behind the current
+            const startIndex = Math.floor(ego.z / -4000) - 1; // Start one segment behind the current
             const segmentsBehind = 4; // Number of segments to render behind the screen
             const segmentsInFront = 4; // Number of segments to render in front of the screen
 
             for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
                 if (i < 0) continue; // Skip negative indices
-                const translatedBase = translateObj(base, 0, 0, -1024 * i);
-                const translatedGrid = translateObj(grid, 0, 0, -1024 * i);
+                const translatedBase = translateObj(base, 0, 0, -4000 * i);
+                const translatedGrid = translateObj(grid, 0, 0, -4000 * i);
                 const projectedBase = translatedBase.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
                 const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
                 
@@ -156,9 +168,9 @@ function world() {
         }
 
         function drawGun() {
-            const imgWidth = 350; // Adjust width of the gun image
-            const imgHeight = 163; // Adjust height of the gun image
-            const posX = canvas.width / 2 - imgWidth / 3; // Position image on the right side
+            const imgWidth = 830; // Adjust width of the gun image
+            const imgHeight = 386; // Adjust height of the gun image
+            const posX = canvas.width - imgWidth - 150; // Position image on the right side
             const posY = canvas.height - imgHeight; // Position image on the bottom side
             
             // Draw the image if it's loaded
@@ -172,7 +184,8 @@ function world() {
         
         drawGroundSegments();
 
-        const translatedCube = translateObj(cube, 362, 84, -362);
+        const translatedCube = translateObj(cube, 0, -2000, 0);
+        // const translatedCube = translateObj(cube, 362, 84, -362);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
 
         drawCube(projectedCube); // Draw cube
@@ -222,7 +235,7 @@ function world() {
             }
         });
         context.closePath();
-        let baseColor = dy - 384 <= 0 ? '#909090' : '#202020';
+        let baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';
 
         context.fillStyle = baseColor;
         context.fill();
@@ -268,7 +281,7 @@ function world() {
     
             if (event.key === 'c') { 
                 crouch = !crouch;
-                ego.y = crouch ? origY * 1.2 : origY; 
+                ego.y = crouch ? origY * 3 : origY; 
             }
         }
     });
@@ -292,7 +305,7 @@ function world() {
     }
 
     function updateMovement() {
-        pace = keysPressed['Shift'] ? 30 : 15;   
+        pace = keysPressed['Shift'] ? 150 : 100;   
         
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -331,7 +344,7 @@ function world() {
         function jumpAnimation() {
             if (jumpProgress < 1) {
                 ego.y = originalY - jumpHeight * Math.sin(Math.PI * jumpProgress); // Create a smooth jump arc
-                jumpProgress += 0.018; // Increment the jump progress
+                jumpProgress += 0.025; // Increment the jump progress
                 requestAnimationFrame(jumpAnimation);
             } else {
                 ego.y = originalY; // Reset to original position after the jump
@@ -360,7 +373,8 @@ function world() {
             mouseSensitivity = 0;
         }
     });
-    
+
+    // fovSlider.addEventListener("input", renderScene);
 
     renderScene(); 
 }
