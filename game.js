@@ -1,4 +1,19 @@
-function world() {
+async function loadVertices() {
+    try {
+        const response = await fetch('gun.json');
+        if (!response.ok) {
+            throw new Error("Failed to load vertices data.");
+        }
+        const vertices = await response.json(); // Parse JSON data
+        return vertices;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+
+async function world() {
     "use strict";
     const canvas = document.getElementById('canvas');    
     if (!canvas) {
@@ -19,7 +34,7 @@ function world() {
     fovSlider.value = 65;
     let usePointer = 0;
     let yaw = 0; // Initial yaw value in radians
-    let pitch = -0.13//-0.13; // Initial pitch value in radians
+    let pitch = -0.13; // Initial pitch value in radians
     let dx = 800;
     let dy = 100;
     let dz = 5000;
@@ -76,7 +91,7 @@ function world() {
         { x:   0, y:   0, z: -4000 },           
     ];
 
-    const bullet = [
+    const bulletTemplate = [
         { x:   0, y:   0, z:   0 },       
         { x:   9, y:   0, z:   0 },
         { x:   9, y:   9, z:   0 },
@@ -99,6 +114,12 @@ function world() {
         { x:   0, y:   0, z:  -57 },           
     ];
 
+    const gun = await loadVertices();
+    // Array to store active bullets
+    let bullets = [];
+    // Bullet speed in mm/frame (adjustable for realistic FPS speed)
+    const bulletSpeed = 150; 
+
     // Load the gun image
     const gunImage = new Image();
     gunImage.src = 'gun.png'; // Ensure this path is correct
@@ -114,15 +135,15 @@ function world() {
     };
 
     let isJumping = false;
-    const jumpHeight = 300; // Max height of the jump
-    const jumpSpeed = 5;    // Speed of the jump
+    const jumpHeight = 300; 
+    const jumpSpeed = 5;
     let crouch = false;
 
     let cam2scrn = 1043;
 
     function calculateDistance(fov) {
-        const fovRadians = (fov * Math.PI) / 180; // Convert FOV to radians
-        return (1600 / (2 * Math.tan(fovRadians / 2))).toFixed(2); // Calculate distance in mm, based on screen width
+        const fovRadians = (fov * Math.PI) / 180; 
+        return (1600 / (2 * Math.tan(fovRadians / 2))).toFixed(2);
     }
 
     function renderScene() {
@@ -136,7 +157,7 @@ function world() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        cam2scrn = calculateDistance(fovSlider.value)
+        cam2scrn = calculateDistance(fovSlider.value);
 
         function translateObj(obj, x1, y1, z1) {
             return obj.map(point => ({
@@ -147,27 +168,31 @@ function world() {
         }
 
         function projectPoint(point, camera) {
-            const cosYaw = Math.cos(yaw);
-            const sinYaw = Math.sin(yaw);
-            const cosPitch = Math.cos(pitch);
-            const sinPitch = Math.sin(pitch);
-
+            const cosYaw = Math.cos(-yaw);
+            const sinYaw = Math.sin(-yaw);
+            const cosPitch = Math.cos(-pitch);
+            const sinPitch = Math.sin(-pitch);
+        
+            // Translate the point relative to the camera's position
             const translatedX = point.x - camera.x;
             const translatedZ = point.z - camera.z;
-            const translatedY = point.y - camera.y;
-
-            // Rotate point based on yaw (left-right rotation)
-            const rotatedX = translatedX * cosYaw + translatedZ * sinYaw;
-            const rotatedZ = -translatedX * sinYaw + translatedZ * cosYaw;
-
-            // Rotate point based on pitch (up-down rotation)
+            const translatedY = - point.y + camera.y;
+        
+            // Apply yaw rotation (rotation around the vertical axis)
+            const rotatedX = translatedX * cosYaw - translatedZ * sinYaw;
+            const rotatedZ = translatedX * sinYaw + translatedZ * cosYaw;
+        
+            // Apply pitch rotation (rotation around the horizontal axis)
             const rotatedY = translatedY * cosPitch - rotatedZ * sinPitch;
-            const finalZ = rotatedY * sinPitch + rotatedZ * cosPitch;
-
+            const finalZ = translatedY * sinPitch + rotatedZ * cosPitch;
+        
+            // Prevent projecting points that are behind the camera (negative Z)
             if (finalZ >= 0) return null;
-            const xProjected = -(rotatedX * cam2scrn) / finalZ + canvas.width / 2;
-            const yProjected = camera.y + ((rotatedY - camera.y) * cam2scrn) / finalZ;
-
+        
+            // Project the 3D point onto the 2D canvas (perspective projection)
+            const xProjected = (rotatedX * cam2scrn) / -finalZ + canvas.width / 2;
+            const yProjected = (rotatedY * cam2scrn) / -finalZ + canvas.height / 2;
+        
             return { x: xProjected, y: yProjected };
         }
 
@@ -190,7 +215,7 @@ function world() {
             }
         }
 
-        function drawGun() {
+        function placeGunImg() {
             const imgWidth = 830; // Adjust width of the gun image
             const imgHeight = 386; // Adjust height of the gun image
             const posX = canvas.width - imgWidth - 150; // Position image on the right side
@@ -208,34 +233,98 @@ function world() {
         drawGroundSegments();
 
         const translatedCube = translateObj(cube, 0, -2000, 0);
-        const translatedBullet = translateObj(bullet, 0, -2000, 0);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-        const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-        drawObj(projectedCube, "red"); // Draw cube
-        drawObj(projectedBullet, "green"); // Draw cube
-        drawGun(); // Draw the gun image last to keep it on top
+        drawObj(projectedCube, "red", false); // Draw cube
+
+        console.log("Rendering scene with", bullets.length, "bullets");
+        bullets.forEach((bullet, index) => {
+            // Translate the bullet according to its current position
+            const translatedBullet = translateObj(bullet.shape, bullet.position.x, bullet.position.y, bullet.position.z);
+            
+            // Project the bullet points onto the 2D canvas
+            const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+        
+            // Check if bullet points are being correctly projected
+            if (projectedBullet.length > 0) {
+                drawObj(projectedBullet, "green", true); // Draw bullet in green color
+            } else {
+                console.warn("Bullet", index, "not visible or projected out of bounds.");
+            }
+        });
+
+        // const translatedGun = translateObj(gun, ego.x+150, ego.y+150, ego.zd-500);
+        // const translatedGun = translateObj(gun, ego.x+10, ego.y+250, ego.z-600);
+        const cosYaw = Math.cos(yaw);
+        const sinYaw = Math.sin(yaw);
+        const cosPitch = Math.cos(pitch);
+        const sinPitch = Math.sin(pitch);
+        
+        const translatedGun = gun.map(point => {
+            let x = point.x + 10;
+            let y = point.y + 300;
+            let z = point.z - 600;
+    
+            // Apply yaw rotation
+            const rotatedX = x * cosYaw - z * sinYaw;
+            const rotatedZ = x * sinYaw + z * cosYaw;
+    
+            // // Apply pitch rotation
+            const rotatedY = y * cosPitch + rotatedZ * sinPitch;
+            const finalZ = - y * sinPitch + rotatedZ * cosPitch;
+    
+            return {
+                x: rotatedX + ego.x, 
+                y: rotatedY + ego.y, 
+                z: finalZ + ego.z
+            };
+        });
+        const projectedGun = translatedGun.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+        drawObj(projectedGun, "green", false, false); // Draw cube
+        // placeGuneImg(); // Draw the gun image last to keep it on top
     }
 
-    function drawObj(projectedCube, objColor) {
-        if (projectedCube.length < 2) return; 
+    function isConvex(triangle) {
+        const crossProduct = (v1, v2, v3) => {
+            return (v2.x - v1.x) * (v3.y - v1.y) - (v2.y - v1.y) * (v3.x - v1.x);
+        };
+        
+        const cp1 = crossProduct(triangle[0], triangle[1], triangle[2]);
+        const cp2 = crossProduct(triangle[1], triangle[2], triangle[0]);
+    
+        // Return true if all cross products have the same sign
+        return cp1 * cp2 >= 0;
+    }
+
+    function drawObj(projectedPoints, objColor, closeShape = true, fillShape = false) {
+        if (projectedPoints.length < 2) return;
+        
         const context = canvas.getContext('2d');
-        const flippedCubeCorners = projectedCube.map(point => ({
+        const flippedPoints = projectedPoints.map(point => ({
             x: point.x,
             y: canvas.height - point.y
         }));
-
+        
         context.beginPath();
-        context.moveTo(flippedCubeCorners[0].x, flippedCubeCorners[0].y);
-        flippedCubeCorners.forEach((point, index) => {
-            if (index > 0) {
-                context.lineTo(point.x, point.y);
-            }
-        });
-        context.closePath(); 
-        context.strokeStyle = objColor;
-        context.lineWidth = 2;
-        context.stroke();
+        context.moveTo(flippedPoints[0].x, flippedPoints[0].y);
+        
+        for (let i = 1; i < flippedPoints.length; i++) {
+            context.lineTo(flippedPoints[i].x, flippedPoints[i].y);
+        }
+        
+        if (closeShape) {
+            context.lineTo(flippedPoints[0].x, flippedPoints[0].y);  // Close the shape if desired
+        }
+    
+        if (fillShape) {
+            context.fillStyle = objColor;
+            context.fill();  // Fill the shape with color
+        } else {
+            context.strokeStyle = objColor;
+            context.lineWidth = 2;
+            context.stroke();  // Stroke the outline of the shape
+        }
     }
+    
 
     function drawWarpedBase(projectedBase, projectedGrid) {
         if (projectedBase.length < 2 || projectedGrid.length < 2) return;
@@ -355,6 +444,9 @@ function world() {
             ego.z += pace * cosYaw;
         }
 
+        // Update bullet positions
+        updateBullets();
+
         renderScene(); // Sync rendering with all updates including mouse movement
         requestAnimationFrame(updateMovement); // Continuously call updateMovement
     }
@@ -377,10 +469,73 @@ function world() {
         }
         jumpAnimation();
     }
-    
-    requestAnimationFrame(updateMovement); // Start the animation loop
 
     
+    function updateBullets() {
+        bullets.forEach((bullet, index) => {
+            // Update bullet position based on its direction and speed
+            bullet.position.x += bullet.direction.x * bulletSpeed;
+            bullet.position.y += bullet.direction.y * bulletSpeed;
+            bullet.position.z += bullet.direction.z * bulletSpeed;
+    
+            // Log the current bullet position for debugging
+            console.log("Bullet position:", bullet.position);
+    
+            // Check if the bullet is still within reasonable bounds relative to the player
+            const maxDistance = 20000; // Define reasonable max distance from the player (e.g., 20 meters)
+            if (
+                Math.abs(bullet.position.x - ego.x) > maxDistance ||
+                Math.abs(bullet.position.y - ego.y) > maxDistance ||
+                Math.abs(bullet.position.z - ego.z) > maxDistance
+            ) {
+                console.log("Removing bullet", index, "due to out-of-bounds position.");
+                bullets.splice(index, 1);
+            }
+        });
+    }
+
+    function shoot() {
+        
+        // Define bullet's starting position at the player's camera position, slightly in front of the screen
+        const offsetDistance = 50; // Adjust as necessary, this moves the bullet in front of the player
+        const startX = ego.x + offsetDistance * Math.cos(yaw) * Math.cos(pitch) + 150; // In front of the player along the yaw direction
+        const startY = ego.y + offsetDistance * Math.sin(pitch) + 200; // Adjust based on pitch
+        const startZ = ego.z + offsetDistance * Math.sin(yaw) * Math.cos(pitch); // Forward along yaw and pitch directions
+        
+        // Correct bullet direction based on yaw and pitch
+        const direction = {
+            x: Math.cos(pitch) * Math.sin(yaw),  // Movement along X based on yaw and pitch
+            y: Math.sin(pitch),                  // Vertical movement based on pitch
+            z: Math.cos(pitch) * Math.cos(yaw)   // Movement along Z based on yaw and pitch
+        };
+        
+        // Normalize the direction vector to ensure consistent speed
+        const magnitude = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2);
+        direction.x /= magnitude;
+        direction.y /= - magnitude;
+        direction.z /= - magnitude;
+        
+        // Add the bullet to the bullets array with its starting position and direction
+        bullets.push({
+            shape: JSON.parse(JSON.stringify(bulletTemplate)), // Clone the bullet shape
+            position: { x: startX, y: startY, z: startZ },     // Starting position
+            direction: direction                               // Normalized direction vector
+        });
+    
+        console.log("Bullet fired:", { startX, startY, startZ, direction });
+    }
+    
+        
+    
+    // Listen for left-click to shoot
+    canvas.addEventListener('click', (event) => {
+        if (event.button === 0 && usePointer) { // Left click and pointer locked
+            shoot();
+        }
+    });
+
+    requestAnimationFrame(updateMovement); // Start the animation loop
+
     // Request pointer lock on canvas click
     canvas.addEventListener('click', () => {
         canvas.requestPointerLock();
@@ -397,8 +552,6 @@ function world() {
             mouseSensitivity = 0;
         }
     });
-
-    // fovSlider.addEventListener("input", renderScene);
 
     renderScene(); 
 }
