@@ -40,7 +40,7 @@ def save_to_json(vertices, output_file):
         json.dump(vertices, f, indent=4)
 
 # Example usage
-stl_file = '/home/flash/Documents/Guns-n-Poses/floatingMuzzle.stl'
+stl_file = '/home/flash/Documents/Guns-n-Poses/stl/floatingMuzzle.stl'
 output_file = '/home/flash/Documents/Guns-n-Poses/fm.json'
 
 vertices = parse_binary_stl(stl_file)
