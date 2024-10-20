@@ -1,6 +1,6 @@
 async function loadVertices(obj) {
     try {
-        const response = await fetch("objects/" + obj);
+        const response = await fetch("objects/"+obj);
         if (!response.ok) {
             throw new Error("ERRRRRROOOOOR");
         }
@@ -23,6 +23,7 @@ async function world() {
     var slider1 = document.getElementById('slider1');
     var fovSlider = document.getElementById('fovSlider');
     
+
     if (!slider1 || !fovSlider) {
         console.error('Slider not found!');
         return;
@@ -42,7 +43,7 @@ async function world() {
     let mouseSensitivity = 0;
     const pitchLimit = Math.PI / 3 - 0.01; 
     let chargeStartTime = 0;
-    let maxChargeTime = 3000; 
+    let maxChargeTime = 3000; //ms
     let isCharging = false;
     let chargedBulletScale = 1;
     let shootingInterval = null;
@@ -56,12 +57,13 @@ async function world() {
     
     let bullets = [];
     const bulletSpeed = 1500;
-    let isJumping = false;
-    const jumpHeight = 600;
-    let crouch = false;
-    let cam2scrn = 1043;
 
-    const keysPressed = {};
+    let isJumping = false;
+    const jumpHeight = 600; 
+    // const jumpSpeed = 5;
+    let crouch = false;
+
+    let cam2scrn = 1043;
 
     function calculateDistance(fov) {
         const fovRadians = (fov * Math.PI) / 180; 
@@ -74,7 +76,7 @@ async function world() {
             console.error('Failed to get canvas context!');
             return;
         }
-
+        // Clear the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
@@ -82,46 +84,39 @@ async function world() {
         cam2scrn = calculateDistance(fovSlider.value);
 
         function translateObj(obj, x1, y1, z1) {
-            let translationMatrix = mat4.create();
-            mat4.translate(translationMatrix, translationMatrix, [x1, y1, z1]);
-        
-            return obj.map(point => {
-                let translatedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
-                vec4.transformMat4(translatedPoint, translatedPoint, translationMatrix);
-                return {
-                    x: translatedPoint[0],
-                    y: translatedPoint[1],
-                    z: translatedPoint[2]
-                };
-            });
+            return obj.map(point => ({
+                x: point.x + x1,
+                y: point.y + y1,
+                z: point.z + z1
+            }));
         }
+        
 
         function projectPoint(point, camera) {
-            let viewMatrix = mat4.create();
+            const cosYaw = Math.cos(-yaw);
+            const sinYaw = Math.sin(-yaw);
+            const cosPitch = Math.cos(-pitch);
+            const sinPitch = Math.sin(-pitch);
+            const translatedX = point.x - camera.x;
+            const translatedZ = point.z - camera.z;
+            const translatedY = - point.y + camera.y;
         
-            mat4.rotateX(viewMatrix, viewMatrix, pitch);        
-            mat4.rotateY(viewMatrix, viewMatrix, yaw);
-            mat4.translate(viewMatrix, viewMatrix, [-camera.x, -camera.y, -camera.z]);
-
-            let projectionMatrix = mat4.create();
-            let fovRadians = (fovSlider.value * Math.PI) / 180;
-            let aspectRatio = canvas.width / canvas.height;
-            mat4.perspective(projectionMatrix, fovRadians, aspectRatio, 0.1, 10000);
+            const rotatedX = translatedX * cosYaw - translatedZ * sinYaw;
+            const rotatedZ = translatedX * sinYaw + translatedZ * cosYaw;
         
-
-            let pointVec = vec4.fromValues(point.x, point.y, point.z, 1);
-            vec4.transformMat4(pointVec, pointVec, viewMatrix);
-            vec4.transformMat4(pointVec, pointVec, projectionMatrix);
+            const rotatedY = translatedY * cosPitch - rotatedZ * sinPitch;
+            const finalZ = translatedY * sinPitch + rotatedZ * cosPitch;
         
-            if (pointVec[3] <= 0) return null;
-            let xProjected = (pointVec[0] / pointVec[3]) * canvas.width / 2 + canvas.width / 2;
-            let yProjected = -(pointVec[1] / pointVec[3]) * canvas.height / 2 + canvas.height / 2;
+            if (finalZ >= 0) return null;
+        
+            const xProjected = (rotatedX * cam2scrn) / -finalZ + canvas.width / 2;
+            const yProjected = (rotatedY * cam2scrn) / -finalZ + canvas.height / 2;
         
             return { x: xProjected, y: yProjected };
         }
 
         function drawGroundSegments() {
-            const startIndex = Math.floor(ego.z / -4000) - 1;
+            const startIndex = Math.floor(ego.z / -4000) - 1; 
             const segmentsBehind = 4; 
             const segmentsInFront = 4;
 
@@ -131,19 +126,20 @@ async function world() {
                 const translatedGrid = translateObj(grid, 0, 0, -4000 * i);
                 const projectedBase = translatedBase.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
                 const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
+                
                 if (projectedBase.length > 0 && projectedGrid.length > 0) {
                     drawWarpedBase(projectedBase, projectedGrid);
                 }
             }
         }
         
-       
         drawGroundSegments();
 
         const translatedCube = translateObj(cube, 0, -2000, 0);
         const projectedCube = translatedCube.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
-        drawObj(projectedCube, "red", false); 
+        drawObj(projectedCube, "red", false); // Draw the walls !!! placeholder !!! FIX THIS LATER
 
+        console.log("Rendering scene with", bullets.length, "bullets");
         bullets.forEach((bullet, index) => {
             const translatedBullet = translateObj(bullet.shape, bullet.position.x, bullet.position.y, bullet.position.z);
             const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
@@ -152,6 +148,7 @@ async function world() {
             } 
         });
 
+        // const translatedGun = translateObj(gun, ego.x+10, ego.y+250, ego.z-600); 
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
         const cosPitch = Math.cos(pitch);
@@ -177,6 +174,7 @@ async function world() {
 
         const projectedGun = translatedGun.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
         drawObj(projectedGun, "green", false, false);
+    
     }
 
     function drawObj(projectedPoints, objColor, closeShape = true, fillShape = false) {
@@ -208,6 +206,7 @@ async function world() {
             context.stroke();
         }
     }
+    
 
     function drawWarpedBase(projectedBase, projectedGrid) {
         if (projectedBase.length < 2 || projectedGrid.length < 2) return;
@@ -258,16 +257,19 @@ async function world() {
         if (pitch < -pitchLimit) pitch = -pitchLimit;
     });
 
+    const keysPressed = {};
+    let pace = 10; 
+
     document.addEventListener('keydown', (event) => {
         if (!event.repeat) {
             keysPressed[event.key] = true; 
-
+    
             if (event.key === ' ') {
                 crouch = false;
                 ego.y = origY;  
                 initiateJump();
             }
-
+    
             if (event.key === 'c') { 
                 crouch = !crouch;
                 ego.y = crouch ? origY * 3 : origY; 
@@ -292,7 +294,7 @@ async function world() {
     }
 
     function updateMovement() {
-        const pace = keysPressed['Shift'] ? 133 : 90;   
+        pace = keysPressed['Shift'] ? 133 : 90;   
         
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -306,7 +308,7 @@ async function world() {
             ego.z -= pace * sinYaw;
         }
 
-        if (keysPressed['w']) {
+        if (keysPressed['w'] ) {
             ego.x += pace * sinYaw; 
             ego.z -= pace * cosYaw;
         }
@@ -316,23 +318,9 @@ async function world() {
         }
 
         updateBullets();
-    }
 
-    function updateBullets() {
-        bullets.forEach((bullet, index) => {
-            bullet.position.x += bullet.direction.x * bulletSpeed;
-            bullet.position.y += bullet.direction.y * bulletSpeed;
-            bullet.position.z += bullet.direction.z * bulletSpeed;
-
-            const maxDistance = 50000;
-            if (
-                Math.abs(bullet.position.x - ego.x) > maxDistance ||
-                Math.abs(bullet.position.y - ego.y) > maxDistance ||
-                Math.abs(bullet.position.z - ego.z) > maxDistance
-            ) {
-                bullets.splice(index, 1);
-            }
-        });
+        renderScene();
+        requestAnimationFrame(updateMovement);
     }
 
     function initiateJump() {
@@ -352,6 +340,26 @@ async function world() {
             }
         }
         jumpAnimation();
+    }
+
+    
+    function updateBullets() {
+        bullets.forEach((bullet, index) => {
+            bullet.position.x += bullet.direction.x * bulletSpeed;
+            bullet.position.y += bullet.direction.y * bulletSpeed;
+            bullet.position.z += bullet.direction.z * bulletSpeed;
+            console.log("Bullet loc:", bullet.position);
+
+            const maxDistance = 50000;
+            if (
+                Math.abs(bullet.position.x - ego.x) > maxDistance ||
+                Math.abs(bullet.position.y - ego.y) > maxDistance ||
+                Math.abs(bullet.position.z - ego.z) > maxDistance
+            ) {
+                console.log("Removing bullet", index, "due to out-of-bounds position.");
+                bullets.splice(index, 1);
+            }
+        });
     }
 
     function shoot(isCharged) {
@@ -387,7 +395,7 @@ async function world() {
     
         console.log("Bullet fired:", { startX, startY, startZ, direction, scale });
     }
-
+    
     canvas.addEventListener('mousedown', (event) => {
         if (event.button === 2 && usePointer) { 
             isCharging = true;
@@ -420,7 +428,11 @@ async function world() {
             clearInterval(shootingInterval);
             shootingInterval = null;
         }
-    });
+    }); 
+
+
+    requestAnimationFrame(updateMovement); 
+
 
     canvas.addEventListener('click', () => {
         canvas.requestPointerLock();
@@ -428,18 +440,17 @@ async function world() {
 
     document.addEventListener('pointerlockchange', () => {
         if (document.pointerLockElement === canvas) {
+            console.log('Pointer locked');
             usePointer = 1;
             mouseSensitivity = parseFloat(slider1.value) * mouseSensitivityConst;
         } else {
+            console.log('Pointer unlocked');
             usePointer = 0;
             mouseSensitivity = 0;
         }
     });
 
-    setInterval(() => {
-        updateMovement();
-        renderScene();
-    }, 1000 / 60); 
+    renderScene(); 
 }
 
 window.onload = world;

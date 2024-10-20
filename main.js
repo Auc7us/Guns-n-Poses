@@ -1,16 +1,6 @@
-async function loadVertices(obj) {
-    try {
-        const response = await fetch("objects/" + obj);
-        if (!response.ok) {
-            throw new Error("ERRRRRROOOOOR");
-        }
-        const vertices = await response.json(); 
-        return vertices;
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
-}
+// main.js
+
+import { loadWorldObjects } from './worldLoader.js';
 
 async function world() {
     "use strict";
@@ -47,12 +37,8 @@ async function world() {
     let chargedBulletScale = 1;
     let shootingInterval = null;
 
-    const base = await loadVertices('base.json');
-    const grid = await loadVertices('grid.json');
-    const cube = await loadVertices('cube.json');
-    const bullet = await loadVertices('bullet.json');
-    const gun = await loadVertices('gun.json');
-    const muzzle = await loadVertices('fm.json');
+    // Load the world objects
+    const { base, grid, cube, bullet, gun, muzzle } = await loadWorldObjects();
     
     let bullets = [];
     const bulletSpeed = 1500;
@@ -137,7 +123,6 @@ async function world() {
             }
         }
         
-       
         drawGroundSegments();
 
         const translatedCube = translateObj(cube, 0, -2000, 0);
@@ -173,7 +158,6 @@ async function world() {
                 z: finalZ + ego.z
             };
         });
-        
 
         const projectedGun = translatedGun.map(corner => projectPoint(corner, ego)).filter(point => point !== null);
         drawObj(projectedGun, "green", false, false);
@@ -270,7 +254,7 @@ async function world() {
 
             if (event.key === 'c') { 
                 crouch = !crouch;
-                ego.y = crouch ? origY * 3 : origY; 
+                ego.y = crouch ? origY + 1000 : origY; 
             }
         }
     });
