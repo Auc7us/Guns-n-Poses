@@ -26,14 +26,14 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
-    const startIndex = Math.floor(ego.z / -4000) - 1;
-    const segmentsBehind = 4;
-    const segmentsInFront = 4;
+    const startIndex = Math.floor(ego.z / -1000) - 1;
+    const segmentsBehind = 15;
+    const segmentsInFront = 15;
 
     for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
         if (i < 0) continue;
-        const translatedBase = translateObj(base, 0, 0, -4000 * i);
-        const translatedGrid = translateObj(grid, 0, 0, -4000 * i);
+        const translatedBase = translateObj(base, 0, 0, -1000 * i);
+        const translatedGrid = translateObj(grid, 0, 0, -1000 * i);
         const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         if (projectedBase.length > 0 && projectedGrid.length > 0) {

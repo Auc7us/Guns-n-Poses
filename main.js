@@ -25,7 +25,7 @@ async function world() {
     let pitch = 0 //-0.13; 
     let dx = 2000;
     let dy = 100;
-    let dz = 5000;
+    let dz = 100;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
@@ -42,8 +42,8 @@ async function world() {
     let bullets = [];
     const bulletSpeed = 1500;
     let isJumping = false;
-    const jumpHeight = 700; // gotta check if this is a realistic height for jump in mm
-    const gravity = -9800;
+    const jumpHeight = 700 //4000; // gotta check if this is a realistic height for jump in mm
+    const gravity = -9800 //-6000;
     const delT = 0.01667;
     let crouch = false;
     let cam2scrn = 1043;
@@ -61,25 +61,34 @@ async function world() {
 
     document.addEventListener('keydown', (event) => {
         if (!event.repeat) {
-            keysPressed[event.key] = true;
-            
+            keysPressed[event.key.toLowerCase()] = true;
+
             if (event.key === ' ') {
                 crouch = false;
-                ego.y = origY;  
+                ego.y = origY;
                 initiateJump(isJumping, ego, jumpHeight, gravity, delT);
             }
-
+    
             if (event.key === 'c') {
                 crouch = !crouch;
                 ego.y = crouch ? origY + 1000 : origY;
             }
         }
     });
-
+    
     document.addEventListener('keyup', (event) => {
-        keysPressed[event.key] = false;
-        resetMovement();
+        keysPressed[event.key.toLowerCase()] = false;
+        if (event.key === 'Shift') {
+            keysPressed['Shift'] = false;
+        }
     });
+    
+    function resetMovement() {
+        for (let key of ['w', 'a', 's', 'd']) {
+            keysPressed[key] = false;
+        }
+    }
+    
 
     canvas.addEventListener('mousedown', (event) => {
         if (event.button === 2 && usePointer) {

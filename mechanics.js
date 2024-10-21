@@ -1,7 +1,7 @@
 // mechanics.js
 
 export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed) {
-    const pace = keysPressed['Shift'] ? 133 : 90;
+    const pace = keysPressed['shift'] ? 133 : 90;
 
     const cosYaw = Math.cos(yaw);
     const sinYaw = Math.sin(yaw);
