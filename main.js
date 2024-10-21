@@ -25,7 +25,7 @@ async function world() {
     let pitch = 0 //-0.13; 
     let dx = 2000;
     let dy = 100;
-    let dz = 100;
+    let dz = 2500;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
