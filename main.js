@@ -1,5 +1,3 @@
-// main.js
-
 import { loadWorldObjects } from './worldLoader.js';
 import { renderScene } from './render.js';
 import { updateMovement, shoot, initiateJump, resetMovement, updateBullets } from './mechanics.js';
@@ -24,8 +22,8 @@ async function world() {
     fovSlider.value = 65;
     let usePointer = 0;
     let yaw = 0; 
-    let pitch = -0.13; 
-    let dx = 800;
+    let pitch = 0 //-0.13; 
+    let dx = 2000;
     let dy = 100;
     let dz = 5000;
     const origY = dy;
@@ -52,7 +50,6 @@ async function world() {
 
     const keysPressed = {};
 
-    // Event listeners
     canvas.addEventListener('mousemove', (event) => {
         const deltaX = event.movementX;
         const deltaY = event.movementY;

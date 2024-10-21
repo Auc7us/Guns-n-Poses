@@ -20,3 +20,17 @@ export function normalizeVector(vector) {
     };
 }
 
+export function translateObj(obj, x1, y1, z1) {
+    let translationMatrix = mat4.create();
+    mat4.translate(translationMatrix, translationMatrix, [x1, y1, z1]);
+    
+    return obj.map(point => {
+        let translatedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
+        vec4.transformMat4(translatedPoint, translatedPoint, translationMatrix);
+        return {
+            x: translatedPoint[0],
+            y: translatedPoint[1],
+            z: translatedPoint[2]
+        };
+    });
+}

@@ -1,21 +1,6 @@
 // render.js
 
-import { calculateDistance } from './utils.js';
-
-export function translateObj(obj, x1, y1, z1) {
-    let translationMatrix = mat4.create();
-    mat4.translate(translationMatrix, translationMatrix, [x1, y1, z1]);
-    
-    return obj.map(point => {
-        let translatedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
-        vec4.transformMat4(translatedPoint, translatedPoint, translationMatrix);
-        return {
-            x: translatedPoint[0],
-            y: translatedPoint[1],
-            z: translatedPoint[2]
-        };
-    });
-}
+import { calculateDistance, translateObj } from './utils.js';
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -146,14 +131,24 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     drawObj(projectedCube, "red", canvas, false);
 
     bullets.forEach((bullet) => {
-        const translatedBullet = translateObj(bullet.shape, bullet.position.x, bullet.position.y, bullet.position.z);
+        const translatedBullet = bullet.shape.map(point => {
+            let transformedPoint = vec3.fromValues(point.x, point.y, point.z);
+            vec3.add(transformedPoint, transformedPoint, [bullet.position.x, bullet.position.y, bullet.position.z]);
+            return {
+                x: transformedPoint[0],
+                y: transformedPoint[1],
+                z: transformedPoint[2]
+            };
+        });
         const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         if (projectedBullet.length > 0) {
             drawObj(projectedBullet, "blue", canvas, true);
         }
     });
+    
 
-    const translatedGun = gun.map(point => {
+    // Transform and draw the gun
+    const transformedGun = gun.map(point => {
         let transformedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
     
         let translationToPlayer = mat4.create();
@@ -178,8 +173,9 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
             y: transformedPoint[1],
             z: transformedPoint[2]
         };
-    });  
+    });
 
-    const projectedGun = translatedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
 }
+

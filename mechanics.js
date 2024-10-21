@@ -72,22 +72,18 @@ export function initiateJump(isJumping, ego, jumpHeight, gravity, deltaTime) {
 
 export function shoot(isCharged, ego, bullets, bullet, yaw, pitch, chargedBulletScale) {
     const scale = isCharged ? chargedBulletScale : 1;
+    const gunBarrelOffset = vec3.fromValues(300, 320, 0);
+    const startPosition = vec3.create();
 
-    const offsetDistance = 50; 
-    const startX = ego.x + offsetDistance * Math.cos(yaw) * Math.cos(pitch) + 150 ; 
-    const startY = ego.y + offsetDistance * Math.sin(pitch) + 200 ; 
-    const startZ = ego.z + offsetDistance * Math.sin(yaw) * Math.cos(pitch);
+    const rotationMatrix = mat4.create();
+    mat4.rotateY(rotationMatrix, rotationMatrix, -yaw);
+    mat4.rotateX(rotationMatrix, rotationMatrix, -pitch);
+    vec3.transformMat4(startPosition, gunBarrelOffset, rotationMatrix);
+    vec3.add(startPosition, startPosition, [ego.x, ego.y, ego.z]);
 
-    const direction = {
-        x: Math.cos(pitch) * Math.sin(yaw),  
-        y: Math.sin(pitch),                  
-        z: Math.cos(pitch) * Math.cos(yaw)   
-    };
-
-    const magnitude = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2);
-    direction.x /= magnitude;
-    direction.y /= -magnitude;
-    direction.z /= -magnitude;
+    const direction = vec3.fromValues(0, 0, -1);
+    vec3.transformMat4(direction, direction, rotationMatrix);
+    vec3.normalize(direction, direction);
 
     const scaledBulletShape = bullet.map(point => ({
         x: point.x * scale,
@@ -97,7 +93,7 @@ export function shoot(isCharged, ego, bullets, bullet, yaw, pitch, chargedBullet
 
     bullets.push({
         shape: JSON.parse(JSON.stringify(scaledBulletShape)),
-        position: { x: startX, y: startY, z: startZ }, 
-        direction: direction 
+        position: { x: startPosition[0], y: startPosition[1], z: startPosition[2] },
+        direction: { x: direction[0], y: direction[1], z: direction[2] }
     });
 }
