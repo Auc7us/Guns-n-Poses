@@ -1,6 +1,6 @@
 // render.js
 
-import { calculateDistance, translateObj, bSplineCurve, hermiteInterpolation} from './utils.js';
+import { calculateDistance, translateObj, rotateObj, hermiteDerivative, hermiteInterpolation} from './utils.js';
 let platformPositionT = 0;
 const platformSpeed = 0.003;
 
@@ -45,36 +45,40 @@ export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, ya
     }
 }
 
-export function drawFloatingPlatform(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformPosition) {
-    const segmentSize = 1000; // The size of each segment
-    const startZ = 0;         // Starting position along the z-axis
-    const endZ = -3000;      // Ending position along the z-axis
-    const xOff = platformPosition.x - 2000;
-    const zOff = platformPosition.z + 2000;
-    // const xOff = 0;
-    // const zOff = 0;
+export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformData) {
+    const { position, tangent } = platformData;
 
-    for (let z = startZ; z >= endZ; z -= segmentSize) {
-        
-        const translatedBase = translateObj(base, xOff, 0, z+zOff);
-        const translatedGrid = translateObj(grid, xOff, 0, z+zOff);
-        const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
-        const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
-        
-        if (projectedBase.length > 0 && projectedGrid.length > 0) {
-            drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
-        }
+    const xOff = position.x;
+    const zOff = position.z;
+
+    // Calculate the rotation angle from the tangent vector
+    const angle = -1*Math.atan2(tangent.z, tangent.x);
+
+    const rotatedBase = rotateObj(obj, angle, [0, 1, 0]); // Rotate around y-axis
+    const rotatedGrid = rotateObj(grid, angle, [0, 1, 0]); // Rotate around y-axis
+    
+    const translatedBase = translateObj(rotatedBase, xOff, 0,  zOff);
+    const translatedGrid = translateObj(rotatedGrid, xOff, 0,  zOff);
+    
+    const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    
+    if (projectedBase.length > 0 && projectedGrid.length > 0) {
+        drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
     }
 }
 
-export function updateFloatingPlatformPosition(P0,P1,T0,T1) {
+
+export function updateFloatingPlatformPosition(P0, P1, T0, T1) {
     platformPositionT += platformSpeed;
     if (platformPositionT > 1) {
         platformPositionT = 0;
     }
     const newPosition = hermiteInterpolation(platformPositionT, P0, P1, T0, T1);
-    return newPosition;
+    const tangent = hermiteDerivative(platformPositionT, P0, P1, T0, T1);
+    return { position: newPosition, tangent: tangent };
 }
+
 
 export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseColor = 'black') {
     if (projectedBase.length < 2 || projectedGrid.length < 2) return;
@@ -192,7 +196,7 @@ export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canva
     context.stroke();
 }
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed) {
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
@@ -231,8 +235,8 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
     drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
     context.restore();
-    const platformPosition = updateFloatingPlatformPosition(P0,P1,T0,T1);
-    drawFloatingPlatform(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformPosition);
+    const platformInfo = updateFloatingPlatformPosition(P0,P1,T0,T1);
+    drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
     
     if (keysPressed['r']) {
         drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve

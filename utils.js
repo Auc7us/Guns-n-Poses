@@ -1,5 +1,4 @@
 // utils.js
-import { projectPoint } from './render.js';
 
 export function calculateDistance(fov) {
     const fovRadians = (fov * Math.PI) / 180;
@@ -36,6 +35,22 @@ export function translateObj(obj, x1, y1, z1) {
     });
 }
 
+export function rotateObj(points, angle, axis) {
+    const rotationMatrix = mat4.create();
+    mat4.rotate(rotationMatrix, rotationMatrix, angle, axis);
+
+    return points.map(point => {
+        const originalVec = vec3.fromValues(point.x, point.y, point.z);
+        const rotatedVec = vec3.create();
+        vec3.transformMat4(rotatedVec, originalVec, rotationMatrix);
+
+        return {
+            x: rotatedVec[0],
+            y: rotatedVec[1],
+            z: rotatedVec[2]
+        };
+    });
+}
 
 export function hermiteInterpolation(t, P0, P1, T0, T1) {
     const h1 = 2 * t ** 3 - 3 * t ** 2 + 1;
@@ -49,6 +64,20 @@ export function hermiteInterpolation(t, P0, P1, T0, T1) {
         z: h1 * P0.z + h2 * T0.z + h3 * P1.z + h4 * T1.z
     };
 }
+
+export function hermiteDerivative(t, P0, P1, T0, T1) {
+    const h1 = 6 * t * t - 6 * t;
+    const h2 = 3 * t * t - 4 * t + 1;
+    const h3 = -6 * t * t + 6 * t;
+    const h4 = 3 * t * t - 2 * t;
+
+    return {
+        x: h1 * P0.x + h2 * T0.x + h3 * P1.x + h4 * T1.x,
+        y: h1 * P0.y + h2 * T0.y + h3 * P1.y + h4 * T1.y,
+        z: h1 * P0.z + h2 * T0.z + h3 * P1.z + h4 * T1.z
+    };
+}
+
 
 // B-spline basis function
 function bSplineBasis(i, k, t, knots) {

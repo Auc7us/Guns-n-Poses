@@ -37,7 +37,7 @@ async function world() {
     let chargedBulletScale = 1;
     let shootingInterval = null;
 
-    const { base, grid, cube, bullet, gun, muzzle } = await loadWorldObjects();
+    const { base, grid, cube, bullet, gun, muzzle, platform, platform_grid } = await loadWorldObjects();
     
     let bullets = [];
     const bulletSpeed = 5000;//1500;
@@ -140,7 +140,7 @@ async function world() {
 
     setInterval(() => {
         updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed);
-        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed);
+        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid);
     }, 1000 * delT); 
 }
 

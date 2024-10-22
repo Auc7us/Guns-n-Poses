@@ -19,6 +19,8 @@ export async function loadWorldObjects() {
     const bullet = await loadVertices('bullet.json');
     const gun = await loadVertices('gun.json');
     const muzzle = await loadVertices('fm.json');
+    const platform = await loadVertices('platform.json');
+    const platform_grid = await loadVertices('platform_grid.json');
     
     return {
         base,
@@ -26,6 +28,8 @@ export async function loadWorldObjects() {
         cube,
         bullet,
         gun,
-        muzzle
+        muzzle,
+        platform,
+        platform_grid
     };
 }
