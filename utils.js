@@ -5,21 +5,6 @@ export function calculateDistance(fov) {
     return (1600 / (2 * Math.tan(fovRadians / 2))).toFixed(2);
 }
 
-// No longer used since we switched to gl-matrix
-
-export function calculateMagnitude(vector) {
-    return Math.sqrt(vector.x ** 2 + vector.y ** 2 + vector.z ** 2);
-}
-
-export function normalizeVector(vector) {
-    const magnitude = calculateMagnitude(vector);
-    return {
-        x: vector.x / magnitude,
-        y: vector.y / magnitude,
-        z: vector.z / magnitude
-    };
-}
-
 export function translateObj(obj, x1, y1, z1) {
     let translationMatrix = mat4.create();
     mat4.translate(translationMatrix, translationMatrix, [x1, y1, z1]);
@@ -78,32 +63,37 @@ export function hermiteDerivative(t, P0, P1, T0, T1) {
     };
 }
 
+// No longer used since we switched to gl-matrix
 
-// B-spline basis function
-function bSplineBasis(i, k, t, knots) {
-    if (k === 1) {
-        return knots[i] <= t && t < knots[i + 1] ? 1.0 : 0.0;
-    } else {
-        const denom1 = knots[i + k - 1] - knots[i];
-        const term1 = denom1 !== 0 ? ((t - knots[i]) / denom1) * bSplineBasis(i, k - 1, t, knots) : 0;
-
-        const denom2 = knots[i + k] - knots[i + 1];
-        const term2 = denom2 !== 0 ? ((knots[i + k] - t) / denom2) * bSplineBasis(i + 1, k - 1, t, knots) : 0;
-
-        return term1 + term2;
-    }
+export function calculateMagnitude(vector) {
+    return Math.sqrt(vector.x ** 2 + vector.y ** 2 + vector.z ** 2);
 }
 
-// B-spline curve function
-export function bSplineCurve(t, controlPoints, degree, knots) {
-    let x = 0, y = 0, z = 0;
-
-    for (let i = 0; i < controlPoints.length; i++) {
-        const basis = bSplineBasis(i, degree + 1, t, knots);
-        x += basis * controlPoints[i].x;
-        y += basis * controlPoints[i].y;
-        z += basis * controlPoints[i].z;
-    }
-
-    return { x, y, z };
+export function normalizeVector(vector) {
+    const magnitude = calculateMagnitude(vector);
+    return {
+        x: vector.x / magnitude,
+        y: vector.y / magnitude,
+        z: vector.z / magnitude
+    };
 }
+
+// export function evaluateBSpline(controlPoints, i, t) {
+//     const P0 = controlPoints[i];
+//     const P1 = controlPoints[i + 1];
+//     const P2 = controlPoints[i + 2];
+//     const P3 = controlPoints[i + 3];
+
+//     const B0 = ((1 - t) ** 3) / 6;
+//     const B1 = (3 * t ** 3 - 6 * t ** 2 + 4) / 6;
+//     const B2 = (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6;
+//     const B3 = (t ** 3) / 6;
+
+//     const x = B0 * P0.x + B1 * P1.x + B2 * P2.x + B3 * P3.x;
+//     const y = B0 * P0.y + B1 * P1.y + B2 * P2.y + B3 * P3.y;
+//     const z = B0 * P0.z + B1 * P1.z + B2 * P2.z + B3 * P3.z;
+
+//     return { x, y, z };
+// }
+
+

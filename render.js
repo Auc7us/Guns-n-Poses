@@ -149,21 +149,21 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
     }
 }
 
-export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
-    const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
-    const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
+// export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
+//     const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
+//     const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
 
-    if (!projectedStart || !projectedEnd) return; // Skip if either point is outside the view
+//     if (!projectedStart || !projectedEnd) return;
 
-    const context = canvas.getContext('2d');
-    context.strokeStyle = 'white';
-    context.lineWidth = 3;
+//     const context = canvas.getContext('2d');
+//     context.strokeStyle = 'white';
+//     context.lineWidth = 3;
 
-    context.beginPath();
-    context.moveTo(projectedStart.x, canvas.height - projectedStart.y);
-    context.lineTo(projectedEnd.x, canvas.height - projectedEnd.y);
-    context.stroke();
-}
+//     context.beginPath();
+//     context.moveTo(projectedStart.x, canvas.height - projectedStart.y);
+//     context.lineTo(projectedEnd.x, canvas.height - projectedEnd.y);
+//     context.stroke();
+// }
 
 export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, thickness = '10', color = '#202020') {
 
@@ -219,27 +219,47 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const T0 = { x:     0, y:    0, z: -16000}; 
     const T1 = { x: 16000, y:    0, z:      0};
 
+    const P_0 = { x: 10000, y: 2000, z: -28000};
+    const P_1 = { x: 20000, y: 2000, z: -38000};
+    const T_1 = { x:     0, y:    0, z: -20000}; 
+    const T_0 = { x: 20000, y:    0, z:      0};
+
+    
     const P00 = { x:     0, y: 2000, z: -20000}; //Left Rail
     const P10 = { x: 10000, y: 2000, z: -30000};
     const T00 = { x:     0, y:    0, z: -20000}; 
     const T10 = { x: 20000, y:    0, z:      0};
+
+    const P_00 = { x: 10000, y: 2000, z: -30000}; //Left_Rail
+    const P_10 = { x: 18000, y: 2000, z: -38000};
+    const T_10 = { x:     0, y:    0, z: -16000}; 
+    const T_00 = { x: 16000, y:    0, z:      0};
+
 
     const P01 = { x:  4000, y: 2000, z: -20000}; //Right Rail
     const P11 = { x:  10000, y: 2000, z:-26000};
     const T01 = { x:     0, y:    0, z: -12000}; 
     const T11 = { x: 12000, y:    0, z:      0}; 
 
+    const P_01 = { x:  10000, y: 2000, z: -26000}; //Right_Rail
+    const P_11 = { x:  22000, y: 2000, z: -38000};
+    const T_11 = { x:     0, y:    0, z: -24000}; 
+    const T_01 = { x: 24000, y:    0, z:      0}; 
+
     const segments = 100;
 
     context.save();
     drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
     drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P_00, P_10, T_00, T_10, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P_01, P_11, T_01, T_11, segments, ego, fovSlider, canvas, pitch, yaw, context);
     context.restore();
     const platformInfo = updateFloatingPlatformPosition(P0,P1,T0,T1);
     drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
     
     if (keysPressed['r']) {
-        drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve
+        drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
+        drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
     } 
     
     bullets.forEach((bullet) => {
@@ -289,5 +309,3 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     drawObj(projectedGun, "green", canvas, false, false);
     
 }
-
-
