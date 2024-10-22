@@ -1,6 +1,9 @@
 // render.js
 
-import { calculateDistance, translateObj } from './utils.js';
+import { calculateDistance, translateObj, rotateObj, hermiteDerivative, hermiteInterpolation} from './utils.js';
+let platformPositionT = 0;
+const platformSpeed = 0.005;
+let platformDirection = 1;
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -26,23 +29,72 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
-    const startIndex = Math.floor(ego.z / -1000) - 1;
-    const segmentsBehind = 15;
-    const segmentsInFront = 15;
+    const segmentSize = 1000; 
+    const startZ = 0;
+    const endZ = -19000;
 
-    for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
-        if (i < 0) continue;
-        const translatedBase = translateObj(base, 0, 0, -1000 * i);
-        const translatedGrid = translateObj(grid, 0, 0, -1000 * i);
+    for (let z = startZ; z >= endZ; z -= segmentSize) {
+        const translatedBase = translateObj(base, 0, 0, z);
+        const translatedGrid = translateObj(grid, 0, 0, z);
         const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        
         if (projectedBase.length > 0 && projectedGrid.length > 0) {
             drawWarpedBase(dy, projectedBase, projectedGrid, canvas);
         }
     }
 }
 
-export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas) {
+export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformData) {
+    const { position, tangent } = platformData;
+    const xOff = position.x;
+    const zOff = position.z;
+    const angle = -1*Math.atan2(tangent.z, tangent.x);
+   
+    const rotatedBase = rotateObj(obj, angle, [0, 1, 0]); 
+    const rotatedGrid = rotateObj(grid, angle, [0, 1, 0]);
+    const translatedBase = translateObj(rotatedBase, xOff, 0,  zOff);
+    const translatedGrid = translateObj(rotatedGrid, xOff, 0,  zOff);
+    const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    
+    if (projectedBase.length > 0 && projectedGrid.length > 0) {
+        drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
+    }
+}
+
+
+export function updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1) {
+    platformPositionT += platformSpeed * platformDirection;
+    
+    if (platformPositionT > 2) {
+        platformPositionT = 2;
+        platformDirection = -1;
+    }
+    else if (platformPositionT < 0) {
+        platformPositionT = 0;
+        platformDirection = 1; 
+    }
+
+    let newPosition, tangent;
+
+    if (platformPositionT <= 1) {
+        const t = platformPositionT; 
+        newPosition = hermiteInterpolation(t, P0, P1, T0, T1);
+        tangent = hermiteDerivative(t, P0, P1, T0, T1);
+    } 
+    else {
+        const t = platformPositionT - 1; 
+        newPosition = hermiteInterpolation(t, P_0, P_1, T_0, T_1);
+        tangent = hermiteDerivative(t, P_0, P_1, T_0, T_1);
+    }
+
+    return { position: newPosition, tangent: tangent };
+}
+
+
+
+export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseColor = 'black') {
     if (projectedBase.length < 2 || projectedGrid.length < 2) return;
 
     const context = canvas.getContext('2d');
@@ -63,8 +115,9 @@ export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas) {
             context.lineTo(point.x, point.y);
         }
     });
+    
     context.closePath();
-    let baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';
+    if (baseColor == 'black') {baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';}
     context.fillStyle = baseColor;
     context.fill();
 
@@ -111,7 +164,54 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
     }
 }
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy) {
+// export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
+//     const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
+//     const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
+
+//     if (!projectedStart || !projectedEnd) return;
+
+//     const context = canvas.getContext('2d');
+//     context.strokeStyle = 'white';
+//     context.lineWidth = 3;
+
+//     context.beginPath();
+//     context.moveTo(projectedStart.x, canvas.height - projectedStart.y);
+//     context.lineTo(projectedEnd.x, canvas.height - projectedEnd.y);
+//     context.stroke();
+// }
+
+export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, thickness = '10', color = '#202020') {
+
+    context.beginPath();
+
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const hermitePoint = hermiteInterpolation(t, P0, P1, T0, T1);
+        const projectedPoint = projectPoint(
+            { x: hermitePoint.x, y: hermitePoint.y, z: hermitePoint.z },
+            ego,
+            fovSlider,
+            canvas,
+            pitch,
+            yaw
+        );
+
+        if (!projectedPoint) continue;
+        const screenX = projectedPoint.x;
+        const screenY = canvas.height - projectedPoint.y;
+        if (i === 0) {
+            context.moveTo(screenX, screenY);
+        } else {
+            context.lineTo(screenX, screenY);
+        }
+    }
+
+    context.strokeStyle = color;
+    context.lineWidth = thickness;
+    context.stroke();
+}
+
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
@@ -125,11 +225,58 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const cam2scrn = calculateDistance(fovSlider.value);
 
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy);
-
     const translatedCube = translateObj(cube, 0, -2000, 0);
     const projectedCube = translatedCube.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedCube, "red", canvas, false);
 
+    const P0 = { x:  2000, y: 2000, z: -20000};
+    const P1 = { x: 10000, y: 2000, z: -28000};
+    const T0 = { x:     0, y:    0, z: -16000}; 
+    const T1 = { x: 16000, y:    0, z:      0};
+
+    const P_0 = { x: 10000, y: 2000, z: -28000};
+    const P_1 = { x: 20000, y: 2000, z: -38000};
+    const T_1 = { x:     0, y:    0, z: -20000}; 
+    const T_0 = { x: 20000, y:    0, z:      0};
+
+    
+    const P00 = { x:     0, y: 2000, z: -20000}; //Left Rail
+    const P10 = { x: 10000, y: 2000, z: -30000};
+    const T00 = { x:     0, y:    0, z: -20000}; 
+    const T10 = { x: 20000, y:    0, z:      0};
+
+    const P_00 = { x: 10000, y: 2000, z: -30000}; //Left_Rail
+    const P_10 = { x: 18000, y: 2000, z: -38000};
+    const T_10 = { x:     0, y:    0, z: -16000}; 
+    const T_00 = { x: 16000, y:    0, z:      0};
+
+
+    const P01 = { x:  4000, y: 2000, z: -20000}; //Right Rail
+    const P11 = { x:  10000, y: 2000, z:-26000};
+    const T01 = { x:     0, y:    0, z: -12000}; 
+    const T11 = { x: 12000, y:    0, z:      0}; 
+
+    const P_01 = { x:  10000, y: 2000, z: -26000}; //Right_Rail
+    const P_11 = { x:  22000, y: 2000, z: -38000};
+    const T_11 = { x:     0, y:    0, z: -24000}; 
+    const T_01 = { x: 24000, y:    0, z:      0}; 
+
+    const segments = 100;
+
+    context.save();
+    drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P_00, P_10, T_00, T_10, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P_01, P_11, T_01, T_11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    context.restore();
+    const platformInfo = updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1);
+    drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
+    
+    if (keysPressed['r']) {
+        drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
+        drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
+    } 
+    
     bullets.forEach((bullet) => {
         const translatedBullet = bullet.shape.map(point => {
             let transformedPoint = vec3.fromValues(point.x, point.y, point.z);
@@ -145,9 +292,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
             drawObj(projectedBullet, "blue", canvas, true);
         }
     });
-    
 
-    // Transform and draw the gun
     const transformedGun = gun.map(point => {
         let transformedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
     
@@ -177,5 +322,5 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
+    
 }
-

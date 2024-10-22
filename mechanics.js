@@ -48,8 +48,6 @@ export function resetMovement() {
     pace = 0;
 }
 
-
-
 export function initiateJump(isJumping, ego, jumpHeight, gravity, deltaTime) {
     if (isJumping) return;
     isJumping = true;
