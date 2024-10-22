@@ -269,10 +269,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, 0 ,-19000, 0);
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -38000 ,-56000, 18000);
-    
-    const translatedCube2 = translateObj(cube, 18000, -2000, -53000);
-    const projectedCube2 = translatedCube2.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
-    drawObj(projectedCube2, "cyan", canvas, false, false, 1);
 
     const P0 = { x:  2000, y: 2000, z: -20000};
     const P1 = { x: 10000, y: 2000, z: -28000};
@@ -321,6 +317,10 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
         drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
         drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
     }
+
+    const translatedCube2 = translateObj(cube, 18000, -2000, -53000);
+    const projectedCube2 = translatedCube2.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    drawObj(projectedCube2, "cyan", canvas, false, false, 1);
     
     const translatedCube1 = translateObj(cube, 0, -2000, 0);
     const projectedCube1 = translatedCube1.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
