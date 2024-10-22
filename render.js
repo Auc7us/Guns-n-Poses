@@ -5,6 +5,49 @@ let platformPositionT = 0;
 const platformSpeed = 0.005;
 let platformDirection = 1;
 
+export function drawAimPoint(canvas, color = 'white', size = 20, lineWidth = 0.5) {
+    const context = canvas.getContext('2d');
+    if (!context) {
+        console.error('Failed to get canvas context!');
+        return;
+    }
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    context.strokeStyle = color;
+    context.lineWidth = lineWidth;
+    context.fillStyle = color;
+
+    context.beginPath();
+    context.arc(centerX, centerY, size * 0.03, 0, 2 * Math.PI);
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(centerX, centerY - size);
+    context.lineTo(centerX, centerY - size / 2);
+    context.stroke();
+
+    const angle1 = (150 * Math.PI) / 180;
+    const x1 = centerX + size * Math.cos(angle1);
+    const y1 = centerY + size * Math.sin(angle1);
+    const x1Inner = centerX + (size / 2) * Math.cos(angle1);
+    const y1Inner = centerY + (size / 2) * Math.sin(angle1);
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x1Inner, y1Inner);
+    context.stroke();
+
+    const angle2 = (30 * Math.PI) / 180;
+    const x2 = centerX + size * Math.cos(angle2);
+    const y2 = centerY + size * Math.sin(angle2);
+    const x2Inner = centerX + (size / 2) * Math.cos(angle2);
+    const y2Inner = centerY + (size / 2) * Math.sin(angle2);
+    context.beginPath();
+    context.moveTo(x2, y2);
+    context.lineTo(x2Inner, y2Inner);
+    context.stroke();
+}
+
+
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
 
@@ -28,14 +71,14 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     return { x: xProjected, y: yProjected };
 }
 
-export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
+export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff) {
     const segmentSize = 1000; 
-    const startZ = 0;
-    const endZ = -19000;
+    // const startZ = 0;
+    // const endZ = -19000;
 
     for (let z = startZ; z >= endZ; z -= segmentSize) {
-        const translatedBase = translateObj(base, 0, 0, z);
-        const translatedGrid = translateObj(grid, 0, 0, z);
+        const translatedBase = translateObj(base, xOff, 0, z);
+        const translatedGrid = translateObj(grid, xOff, 0, z);
         const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         
@@ -134,7 +177,7 @@ export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseCol
     context.stroke();
 }
 
-export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fillShape = false) {
+export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fillShape = false, lineWidth = 2) {
     if (projectedPoints.length < 2) return;
 
     const context = canvas.getContext('2d');
@@ -159,7 +202,7 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
         context.fill();
     } else {
         context.strokeStyle = objColor;
-        context.lineWidth = 2;
+        context.lineWidth = lineWidth;
         context.stroke();
     }
 }
@@ -224,10 +267,12 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     const cam2scrn = calculateDistance(fovSlider.value);
 
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy);
-    const translatedCube = translateObj(cube, 0, -2000, 0);
-    const projectedCube = translatedCube.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
-    drawObj(projectedCube, "red", canvas, false);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, 0 ,-19000, 0);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -38000 ,-56000, 18000);
+    
+    const translatedCube2 = translateObj(cube, 18000, -2000, -53000);
+    const projectedCube2 = translatedCube2.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    drawObj(projectedCube2, "cyan", canvas, false, false, 1);
 
     const P0 = { x:  2000, y: 2000, z: -20000};
     const P1 = { x: 10000, y: 2000, z: -28000};
@@ -275,7 +320,11 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     if (keysPressed['r']) {
         drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
         drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
-    } 
+    }
+    
+    const translatedCube1 = translateObj(cube, 0, -2000, 0);
+    const projectedCube1 = translatedCube1.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    drawObj(projectedCube1, "red", canvas, false);
     
     bullets.forEach((bullet) => {
         const translatedBullet = bullet.shape.map(point => {
@@ -289,7 +338,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
         });
         const projectedBullet = translatedBullet.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         if (projectedBullet.length > 0) {
-            drawObj(projectedBullet, "blue", canvas, true);
+            drawObj(projectedBullet, "white", canvas, true);
         }
     });
 
@@ -322,5 +371,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
-    
+
+    drawAimPoint(canvas);
 }
