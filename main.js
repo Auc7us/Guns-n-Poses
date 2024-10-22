@@ -25,7 +25,7 @@ async function world() {
     let pitch = 0 //-0.13; 
     let dx = 2000;
     let dy = 100;
-    let dz = 2500;
+    let dz = 5000;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
@@ -42,7 +42,7 @@ async function world() {
     let bullets = [];
     const bulletSpeed = 1500;
     let isJumping = false;
-    const jumpHeight = 700 //4000; // gotta check if this is a realistic height for jump in mm
+    const jumpHeight = 7000 //4000; // gotta check if this is a realistic height for jump in mm
     const gravity = -9800 //-6000;
     const delT = 0.01667;
     let crouch = false;
@@ -69,7 +69,7 @@ async function world() {
                 initiateJump(isJumping, ego, jumpHeight, gravity, delT);
             }
     
-            if (event.key === 'c') {
+            if (event.key.toLowerCase() === 'c') {
                 crouch = !crouch;
                 ego.y = crouch ? origY + 1000 : origY;
             }

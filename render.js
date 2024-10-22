@@ -1,6 +1,6 @@
 // render.js
 
-import { calculateDistance, translateObj } from './utils.js';
+import { calculateDistance, translateObj, bSplineCurve, drawHermiteCurve} from './utils.js';
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -27,8 +27,8 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
     const startIndex = Math.floor(ego.z / -1000) - 1;
-    const segmentsBehind = 15;
-    const segmentsInFront = 15;
+    const segmentsBehind = 5;
+    const segmentsInFront = 10;
 
     for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
         if (i < 0) continue;
@@ -111,6 +111,23 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
     }
 }
 
+// Function to draw a straight path segment
+export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
+    const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
+    const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
+
+    if (!projectedStart || !projectedEnd) return; // Skip if either point is outside the view
+
+    const context = canvas.getContext('2d');
+    context.strokeStyle = 'white';
+    context.lineWidth = 3;
+
+    context.beginPath();
+    context.moveTo(projectedStart.x, canvas.height - projectedStart.y);
+    context.lineTo(projectedEnd.x, canvas.height - projectedEnd.y);
+    context.stroke();
+}
+
 export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy) {
     const context = canvas.getContext('2d');
     if (!context) {
@@ -125,7 +142,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const cam2scrn = calculateDistance(fovSlider.value);
 
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy);
-
     const translatedCube = translateObj(cube, 0, -2000, 0);
     const projectedCube = translatedCube.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedCube, "red", canvas, false);
@@ -145,9 +161,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
             drawObj(projectedBullet, "blue", canvas, true);
         }
     });
-    
 
-    // Transform and draw the gun
     const transformedGun = gun.map(point => {
         let transformedPoint = vec4.fromValues(point.x, point.y, point.z, 1);
     
@@ -177,5 +191,33 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
+    
+
+    const startPoint = { x: 0, y: 2000, z: 0 };
+    const endPoint = { x: 0, y: 2000, z: -20000 };
+
+    const startPoint1 = { x: 4000, y: 2000, z: 0 };
+    const endPoint1 = { x: 4000, y: 2000, z: -20000 };
+
+    drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw);
+    drawStraightPath(startPoint1, endPoint1, canvas, fovSlider, ego, pitch, yaw);
+    // Define Hermite curve control points and tangents
+    const P00 = { x: 0,      y: 2000, z: -20000};
+    const P10 = { x: 10000,  y: 2000, z: -30000};
+    const T00 = { x: 0, y: 0, z: -20000 }; // Curve toward the right in the x-z plane
+    const T10 = { x: 20000, y: 0, z: 0 }; // Similarly curve smoothly from the end
+
+    const P01 = { x:  4000,  y: 2000, z: -20000};
+    const P11 = { x:  10000,  y: 2000, z: -24000};
+    const T01 = { x: 0, y: 0, z: -12000 }; // Curve toward the right in the x-z plane
+    const T11 = { x: 12000, y: 0, z: 0 }; // Similarly curve smoothly from the end
+
+    const segments = 100;
+    
+    // Draw the Hermite curve
+    drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+
 }
+
 
