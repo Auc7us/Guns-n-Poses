@@ -29,11 +29,10 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
-    const segmentSize = 1000; // The size of each segment
-    const startZ = 0;         // Starting position along the z-axis
-    const endZ = -19000;      // Ending position along the z-axis
-    
-    // Loop through each segment from startZ to endZ
+    const segmentSize = 1000; 
+    const startZ = 0;
+    const endZ = -19000;
+
     for (let z = startZ; z >= endZ; z -= segmentSize) {
         const translatedBase = translateObj(base, 0, 0, z);
         const translatedGrid = translateObj(grid, 0, 0, z);
@@ -48,19 +47,14 @@ export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, ya
 
 export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformData) {
     const { position, tangent } = platformData;
-
     const xOff = position.x;
     const zOff = position.z;
-
-    // Calculate the rotation angle from the tangent vector
     const angle = -1*Math.atan2(tangent.z, tangent.x);
-
-    const rotatedBase = rotateObj(obj, angle, [0, 1, 0]); // Rotate around y-axis
-    const rotatedGrid = rotateObj(grid, angle, [0, 1, 0]); // Rotate around y-axis
-    
+   
+    const rotatedBase = rotateObj(obj, angle, [0, 1, 0]); 
+    const rotatedGrid = rotateObj(grid, angle, [0, 1, 0]);
     const translatedBase = translateObj(rotatedBase, xOff, 0,  zOff);
     const translatedGrid = translateObj(rotatedGrid, xOff, 0,  zOff);
-    
     const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     
@@ -121,6 +115,7 @@ export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseCol
             context.lineTo(point.x, point.y);
         }
     });
+    
     context.closePath();
     if (baseColor == 'black') {baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';}
     context.fillStyle = baseColor;
