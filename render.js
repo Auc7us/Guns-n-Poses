@@ -2,7 +2,8 @@
 
 import { calculateDistance, translateObj, rotateObj, hermiteDerivative, hermiteInterpolation} from './utils.js';
 let platformPositionT = 0;
-const platformSpeed = 0.003;
+const platformSpeed = 0.005;
+let platformDirection = 1;
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -69,15 +70,34 @@ export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, y
 }
 
 
-export function updateFloatingPlatformPosition(P0, P1, T0, T1) {
-    platformPositionT += platformSpeed;
-    if (platformPositionT > 1) {
-        platformPositionT = 0;
+export function updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1) {
+    platformPositionT += platformSpeed * platformDirection;
+    
+    if (platformPositionT > 2) {
+        platformPositionT = 2;
+        platformDirection = -1;
     }
-    const newPosition = hermiteInterpolation(platformPositionT, P0, P1, T0, T1);
-    const tangent = hermiteDerivative(platformPositionT, P0, P1, T0, T1);
+    else if (platformPositionT < 0) {
+        platformPositionT = 0;
+        platformDirection = 1; 
+    }
+
+    let newPosition, tangent;
+
+    if (platformPositionT <= 1) {
+        const t = platformPositionT; 
+        newPosition = hermiteInterpolation(t, P0, P1, T0, T1);
+        tangent = hermiteDerivative(t, P0, P1, T0, T1);
+    } 
+    else {
+        const t = platformPositionT - 1; 
+        newPosition = hermiteInterpolation(t, P_0, P_1, T_0, T_1);
+        tangent = hermiteDerivative(t, P_0, P_1, T_0, T_1);
+    }
+
     return { position: newPosition, tangent: tangent };
 }
+
 
 
 export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseColor = 'black') {
@@ -254,7 +274,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     drawHermiteCurve(P_00, P_10, T_00, T_10, segments, ego, fovSlider, canvas, pitch, yaw, context);
     drawHermiteCurve(P_01, P_11, T_01, T_11, segments, ego, fovSlider, canvas, pitch, yaw, context);
     context.restore();
-    const platformInfo = updateFloatingPlatformPosition(P0,P1,T0,T1);
+    const platformInfo = updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1);
     drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
     
     if (keysPressed['r']) {
