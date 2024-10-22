@@ -25,7 +25,7 @@ async function world() {
     let pitch = 0 //-0.13; 
     let dx = 2000;
     let dy = 100;
-    let dz = 5000;
+    let dz = 2500;//-16000;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
@@ -40,7 +40,7 @@ async function world() {
     const { base, grid, cube, bullet, gun, muzzle } = await loadWorldObjects();
     
     let bullets = [];
-    const bulletSpeed = 1500;
+    const bulletSpeed = 5000;//1500;
     let isJumping = false;
     const jumpHeight = 7000 //4000; // gotta check if this is a realistic height for jump in mm
     const gravity = -9800 //-6000;
@@ -112,7 +112,7 @@ async function world() {
             const chargeDuration = Date.now() - chargeStartTime;
 
             if (chargeDuration >= 100) {
-                chargedBulletScale = 5 + Math.min(chargeDuration / maxChargeTime, 1) * 10;
+                chargedBulletScale = 5 + Math.min(chargeDuration / maxChargeTime, 1) * 20;
                 shoot(true, ego, bullets, bullet, yaw, pitch, chargedBulletScale);
                 chargedBulletScale = 1;
             }
@@ -140,7 +140,7 @@ async function world() {
 
     setInterval(() => {
         updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed);
-        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy);
+        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed);
     }, 1000 * delT); 
 }
 

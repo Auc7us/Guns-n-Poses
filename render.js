@@ -1,6 +1,8 @@
 // render.js
 
-import { calculateDistance, translateObj, bSplineCurve, drawHermiteCurve} from './utils.js';
+import { calculateDistance, translateObj, bSplineCurve, hermiteInterpolation} from './utils.js';
+let platformPositionT = 0;
+const platformSpeed = 0.003;
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -26,23 +28,55 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy) {
-    const startIndex = Math.floor(ego.z / -1000) - 1;
-    const segmentsBehind = 5;
-    const segmentsInFront = 10;
-
-    for (let i = startIndex - segmentsBehind; i <= startIndex + segmentsInFront; i++) {
-        if (i < 0) continue;
-        const translatedBase = translateObj(base, 0, 0, -1000 * i);
-        const translatedGrid = translateObj(grid, 0, 0, -1000 * i);
+    const segmentSize = 1000; // The size of each segment
+    const startZ = 0;         // Starting position along the z-axis
+    const endZ = -19000;      // Ending position along the z-axis
+    
+    // Loop through each segment from startZ to endZ
+    for (let z = startZ; z >= endZ; z -= segmentSize) {
+        const translatedBase = translateObj(base, 0, 0, z);
+        const translatedGrid = translateObj(grid, 0, 0, z);
         const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
         const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        
         if (projectedBase.length > 0 && projectedGrid.length > 0) {
             drawWarpedBase(dy, projectedBase, projectedGrid, canvas);
         }
     }
 }
 
-export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas) {
+export function drawFloatingPlatform(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformPosition) {
+    const segmentSize = 1000; // The size of each segment
+    const startZ = 0;         // Starting position along the z-axis
+    const endZ = -3000;      // Ending position along the z-axis
+    const xOff = platformPosition.x - 2000;
+    const zOff = platformPosition.z + 2000;
+    // const xOff = 0;
+    // const zOff = 0;
+
+    for (let z = startZ; z >= endZ; z -= segmentSize) {
+        
+        const translatedBase = translateObj(base, xOff, 0, z+zOff);
+        const translatedGrid = translateObj(grid, xOff, 0, z+zOff);
+        const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        
+        if (projectedBase.length > 0 && projectedGrid.length > 0) {
+            drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
+        }
+    }
+}
+
+export function updateFloatingPlatformPosition(P0,P1,T0,T1) {
+    platformPositionT += platformSpeed;
+    if (platformPositionT > 1) {
+        platformPositionT = 0;
+    }
+    const newPosition = hermiteInterpolation(platformPositionT, P0, P1, T0, T1);
+    return newPosition;
+}
+
+export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseColor = 'black') {
     if (projectedBase.length < 2 || projectedGrid.length < 2) return;
 
     const context = canvas.getContext('2d');
@@ -64,7 +98,7 @@ export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas) {
         }
     });
     context.closePath();
-    let baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';
+    if (baseColor == 'black') {baseColor = dy - 2000 <= 0 ? '#909090' : '#202020';}
     context.fillStyle = baseColor;
     context.fill();
 
@@ -111,7 +145,6 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
     }
 }
 
-// Function to draw a straight path segment
 export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
     const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
     const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
@@ -128,7 +161,38 @@ export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, p
     context.stroke();
 }
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy) {
+export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, thickness = '10', color = '#202020') {
+
+    context.beginPath();
+
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const hermitePoint = hermiteInterpolation(t, P0, P1, T0, T1);
+        const projectedPoint = projectPoint(
+            { x: hermitePoint.x, y: hermitePoint.y, z: hermitePoint.z },
+            ego,
+            fovSlider,
+            canvas,
+            pitch,
+            yaw
+        );
+
+        if (!projectedPoint) continue;
+        const screenX = projectedPoint.x;
+        const screenY = canvas.height - projectedPoint.y;
+        if (i === 0) {
+            context.moveTo(screenX, screenY);
+        } else {
+            context.lineTo(screenX, screenY);
+        }
+    }
+
+    context.strokeStyle = color;
+    context.lineWidth = thickness;
+    context.stroke();
+}
+
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
@@ -146,6 +210,34 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const projectedCube = translatedCube.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedCube, "red", canvas, false);
 
+    const P0 = { x:  2000, y: 2000, z: -20000};
+    const P1 = { x: 10000, y: 2000, z: -28000};
+    const T0 = { x:     0, y:    0, z: -16000}; 
+    const T1 = { x: 16000, y:    0, z:      0};
+
+    const P00 = { x:     0, y: 2000, z: -20000}; //Left Rail
+    const P10 = { x: 10000, y: 2000, z: -30000};
+    const T00 = { x:     0, y:    0, z: -20000}; 
+    const T10 = { x: 20000, y:    0, z:      0};
+
+    const P01 = { x:  4000, y: 2000, z: -20000}; //Right Rail
+    const P11 = { x:  10000, y: 2000, z:-26000};
+    const T01 = { x:     0, y:    0, z: -12000}; 
+    const T11 = { x: 12000, y:    0, z:      0}; 
+
+    const segments = 100;
+
+    context.save();
+    drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    context.restore();
+    const platformPosition = updateFloatingPlatformPosition(P0,P1,T0,T1);
+    drawFloatingPlatform(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformPosition);
+    
+    if (keysPressed['r']) {
+        drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve
+    } 
+    
     bullets.forEach((bullet) => {
         const translatedBullet = bullet.shape.map(point => {
             let transformedPoint = vec3.fromValues(point.x, point.y, point.z);
@@ -192,32 +284,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
     
-
-    const startPoint = { x: 0, y: 2000, z: 0 };
-    const endPoint = { x: 0, y: 2000, z: -20000 };
-
-    const startPoint1 = { x: 4000, y: 2000, z: 0 };
-    const endPoint1 = { x: 4000, y: 2000, z: -20000 };
-
-    drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw);
-    drawStraightPath(startPoint1, endPoint1, canvas, fovSlider, ego, pitch, yaw);
-    // Define Hermite curve control points and tangents
-    const P00 = { x: 0,      y: 2000, z: -20000};
-    const P10 = { x: 10000,  y: 2000, z: -30000};
-    const T00 = { x: 0, y: 0, z: -20000 }; // Curve toward the right in the x-z plane
-    const T10 = { x: 20000, y: 0, z: 0 }; // Similarly curve smoothly from the end
-
-    const P01 = { x:  4000,  y: 2000, z: -20000};
-    const P11 = { x:  10000,  y: 2000, z: -24000};
-    const T01 = { x: 0, y: 0, z: -12000 }; // Curve toward the right in the x-z plane
-    const T11 = { x: 12000, y: 0, z: 0 }; // Similarly curve smoothly from the end
-
-    const segments = 100;
-    
-    // Draw the Hermite curve
-    drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
-    drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
-
 }
 
 
