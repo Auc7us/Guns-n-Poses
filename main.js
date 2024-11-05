@@ -1,6 +1,6 @@
 import { loadWorldObjects } from './worldLoader.js';
 import { renderScene } from './render.js';
-import { updateMovement, shoot, initiateJump, resetMovement, updateBullets } from './mechanics.js';
+import { updateMovement, shoot, initiateJump, createPlayerHitbox, resetMovement, updateBullets } from './mechanics.js';
 
 async function world() {
     "use strict";
@@ -47,6 +47,12 @@ async function world() {
     const delT = 0.01667;
     let crouch = false;
     let cam2scrn = 1043;
+
+    const playerDimensions = {
+        width: 1000,  // Width of the player in mm
+        height: 2000,  // Full height of the player in mm
+        depth: 1000  // Depth of the player in mm
+    };    
 
     const keysPressed = {};
 
@@ -140,7 +146,8 @@ async function world() {
 
     setInterval(() => {
         updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed);
-        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid);
+        const playerHitbox = createPlayerHitbox(ego, playerDimensions);
+        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox);
     }, 1000 * delT); 
 }
 

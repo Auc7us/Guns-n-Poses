@@ -254,7 +254,7 @@ export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canva
     context.stroke();
 }
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid) {
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
@@ -371,6 +371,31 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
+
+    function drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw) {
+        // Define the corners of the collision box
+        const corners = [
+            { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
+            { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
+            { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
+            { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
+            { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
+            { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
+            { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.max.z },
+            { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.max.z }
+        ];
+    
+        // Project the 3D corners to 2D screen coordinates
+        const projectedPoints = corners
+            .map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw))
+            .filter(point => point !== null);
+    
+        // Draw the box using drawObj
+        drawObj(projectedPoints, 'red', canvas, true, false, 2); // Red outline for debugging
+    }
+    drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw);
+
+    
 
     drawAimPoint(canvas);
 }

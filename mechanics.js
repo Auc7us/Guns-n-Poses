@@ -95,3 +95,18 @@ export function shoot(isCharged, ego, bullets, bullet, yaw, pitch, chargedBullet
         direction: { x: direction[0], y: direction[1], z: direction[2] }
     });
 }
+
+export function createPlayerHitbox(ego, dimensions) {
+    return {
+        min: {
+            x: ego.x - dimensions.width / 2,
+            y: ego.y + dimensions.height - 100,  // Feet at ground level (y = 2000)
+            z: ego.z - dimensions.depth / 2,
+        },
+        max: {
+            x: ego.x + dimensions.width / 2,
+            y: ego.y - 100, // Top of head (y = 0 if height is 2000)
+            z: ego.z + dimensions.depth / 2,
+        }
+    };
+}
