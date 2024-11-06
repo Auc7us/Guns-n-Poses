@@ -1,6 +1,7 @@
 // levelBuilder.js
 
-import { hermiteInterpolation, hermiteDerivative } from './utils.js';
+import { translateObj, rotateObj, hermiteInterpolation, hermiteDerivative } from './utils.js';
+import { projectPoint, drawWarpedBase } from './render.js';
 
 export class CurveSegment {
     constructor(P0, P1, T0, T1) {
@@ -64,3 +65,37 @@ export const rightRailSegments = [
     )
 ];
 
+export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff) {
+    const segmentSize = 1000; 
+    // const startZ = 0;
+    // const endZ = -19000;
+
+    for (let z = startZ; z >= endZ; z -= segmentSize) {
+        const translatedBase = translateObj(base, xOff, 0, z);
+        const translatedGrid = translateObj(grid, xOff, 0, z);
+        const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+        
+        if (projectedBase.length > 0 && projectedGrid.length > 0) {
+            drawWarpedBase(dy, projectedBase, projectedGrid, canvas);
+        }
+    }
+}
+
+export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, yaw, dy, platformData) {
+    const { position, tangent } = platformData;
+    const xOff = position.x;
+    const zOff = position.z;
+    const angle = -1*Math.atan2(tangent.z, tangent.x);
+   
+    const rotatedBase = rotateObj(obj, angle, [0, 1, 0]); 
+    const rotatedGrid = rotateObj(grid, angle, [0, 1, 0]);
+    const translatedBase = translateObj(rotatedBase, xOff, 0,  zOff);
+    const translatedGrid = translateObj(rotatedGrid, xOff, 0,  zOff);
+    const projectedBase = translatedBase.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    const projectedGrid = translatedGrid.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
+    
+    if (projectedBase.length > 0 && projectedGrid.length > 0) {
+        drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
+    }
+}
