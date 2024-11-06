@@ -1,10 +1,8 @@
 // render.js
 
 import { calculateDistance, translateObj, rotateObj, hermiteDerivative, hermiteInterpolation} from './utils.js';
-
-let platformPositionT = 0;
-const platformSpeed = 0.005;
-let platformDirection = 1;
+import {updateFloatingPlatformPosition} from './groundMechanics.js';
+import { CurveSegment, mainCurveSegments, leftRailSegments, rightRailSegments } from './levelBuilder.js';
 
 export function drawAimPoint(canvas, color = 'white', size = 20, lineWidth = 0.5) {
     const context = canvas.getContext('2d');
@@ -47,7 +45,6 @@ export function drawAimPoint(canvas, color = 'white', size = 20, lineWidth = 0.5
     context.lineTo(x2Inner, y2Inner);
     context.stroke();
 }
-
 
 export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     let viewMatrix = mat4.create();
@@ -106,37 +103,6 @@ export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, y
         drawWarpedBase(dy, projectedBase, projectedGrid, canvas, '#5C4033');
     }
 }
-
-
-export function updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1) {
-    platformPositionT += platformSpeed * platformDirection;
-    
-    if (platformPositionT > 2) {
-        platformPositionT = 2;
-        platformDirection = -1;
-    }
-    else if (platformPositionT < 0) {
-        platformPositionT = 0;
-        platformDirection = 1; 
-    }
-
-    let newPosition, tangent;
-
-    if (platformPositionT <= 1) {
-        const t = platformPositionT; 
-        newPosition = hermiteInterpolation(t, P0, P1, T0, T1);
-        tangent = hermiteDerivative(t, P0, P1, T0, T1);
-    } 
-    else {
-        const t = platformPositionT - 1; 
-        newPosition = hermiteInterpolation(t, P_0, P_1, T_0, T_1);
-        tangent = hermiteDerivative(t, P_0, P_1, T_0, T_1);
-    }
-
-    return { position: newPosition, tangent: tangent };
-}
-
-
 
 export function drawWarpedBase(dy, projectedBase, projectedGrid, canvas, baseColor = 'black') {
     if (projectedBase.length < 2 || projectedGrid.length < 2) return;
@@ -208,29 +174,12 @@ export function drawObj(projectedPoints, objColor, canvas, closeShape = true, fi
     }
 }
 
-// export function drawStraightPath(startPoint, endPoint, canvas, fovSlider, ego, pitch, yaw) {
-//     const projectedStart = projectPoint(startPoint, ego, fovSlider, canvas, pitch, yaw);
-//     const projectedEnd = projectPoint(endPoint, ego, fovSlider, canvas, pitch, yaw);
-
-//     if (!projectedStart || !projectedEnd) return;
-
-//     const context = canvas.getContext('2d');
-//     context.strokeStyle = 'white';
-//     context.lineWidth = 3;
-
-//     context.beginPath();
-//     context.moveTo(projectedStart.x, canvas.height - projectedStart.y);
-//     context.lineTo(projectedEnd.x, canvas.height - projectedEnd.y);
-//     context.stroke();
-// }
-
-export function drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, thickness = '10', color = '#202020') {
-
+export function drawHermiteCurve(segment, segments = 100, ego, fovSlider, canvas, pitch, yaw, context, thickness = '10', color = '#202020') {
     context.beginPath();
 
     for (let i = 0; i <= segments; i++) {
         const t = i / segments;
-        const hermitePoint = hermiteInterpolation(t, P0, P1, T0, T1);
+        const hermitePoint = segment.getInterpolatedPoint(t);
         const projectedPoint = projectPoint(
             { x: hermitePoint.x, y: hermitePoint.y, z: hermitePoint.z },
             ego,
@@ -270,53 +219,18 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, 0 ,-19000, 0);
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -38000 ,-56000, 18000);
-
-    const P0 = { x:  2000, y: 2000, z: -20000};
-    const P1 = { x: 10000, y: 2000, z: -28000};
-    const T0 = { x:     0, y:    0, z: -16000}; 
-    const T1 = { x: 16000, y:    0, z:      0};
-
-    const P_0 = { x: 10000, y: 2000, z: -28000};
-    const P_1 = { x: 20000, y: 2000, z: -38000};
-    const T_1 = { x:     0, y:    0, z: -20000}; 
-    const T_0 = { x: 20000, y:    0, z:      0};
-
     
-    const P00 = { x:     0, y: 2000, z: -20000}; //Left Rail
-    const P10 = { x: 10000, y: 2000, z: -30000};
-    const T00 = { x:     0, y:    0, z: -20000}; 
-    const T10 = { x: 20000, y:    0, z:      0};
-
-    const P_00 = { x: 10000, y: 2000, z: -30000}; //Left_Rail
-    const P_10 = { x: 18000, y: 2000, z: -38000};
-    const T_10 = { x:     0, y:    0, z: -16000}; 
-    const T_00 = { x: 16000, y:    0, z:      0};
-
-
-    const P01 = { x:  4000, y: 2000, z: -20000}; //Right Rail
-    const P11 = { x:  10000, y: 2000, z:-26000};
-    const T01 = { x:     0, y:    0, z: -12000}; 
-    const T11 = { x: 12000, y:    0, z:      0}; 
-
-    const P_01 = { x:  10000, y: 2000, z: -26000}; //Right_Rail
-    const P_11 = { x:  22000, y: 2000, z: -38000};
-    const T_11 = { x:     0, y:    0, z: -24000}; 
-    const T_01 = { x: 24000, y:    0, z:      0}; 
-
     const segments = 100;
-
     context.save();
-    drawHermiteCurve(P00, P10, T00, T10, segments, ego, fovSlider, canvas, pitch, yaw, context);
-    drawHermiteCurve(P01, P11, T01, T11, segments, ego, fovSlider, canvas, pitch, yaw, context);
-    drawHermiteCurve(P_00, P_10, T_00, T_10, segments, ego, fovSlider, canvas, pitch, yaw, context);
-    drawHermiteCurve(P_01, P_11, T_01, T_11, segments, ego, fovSlider, canvas, pitch, yaw, context);
+    leftRailSegments.forEach(segment => drawHermiteCurve(segment, segments, ego, fovSlider, canvas, pitch, yaw, context));
+    rightRailSegments.forEach(segment => drawHermiteCurve(segment, segments, ego, fovSlider, canvas, pitch, yaw, context));
     context.restore();
-    const platformInfo = updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1);
+    const platformInfo = updateFloatingPlatformPosition(mainCurveSegments);
     drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
+
     
     if (keysPressed['v']) {
-        drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
-        drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
+        mainCurveSegments.forEach(segment => drawHermiteCurve(segment, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'));
     }
 
     const translatedCube2 = translateObj(cube, 18000, -2000, -53000);
@@ -391,9 +305,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     //     drawObj(projectedPoints, 'red', canvas, true, false, 2); 
     // }
-    // drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw);
-
-    
+    // drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw); 
 
     drawAimPoint(canvas);
 }
