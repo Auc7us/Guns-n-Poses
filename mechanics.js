@@ -1,4 +1,4 @@
-// mechanics.js
+//player mechanics.js
 
 export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed) {
     const pace = keysPressed['shift'] ? 133 : 90;
@@ -100,12 +100,12 @@ export function createPlayerHitbox(ego, dimensions) {
     return {
         min: {
             x: ego.x - dimensions.width / 2,
-            y: ego.y + dimensions.height - 100,  // Feet at ground level (y = 2000)
+            y: ego.y + dimensions.height - 100,
             z: ego.z - dimensions.depth / 2,
         },
         max: {
             x: ego.x + dimensions.width / 2,
-            y: ego.y - 100, // Top of head (y = 0 if height is 2000)
+            y: ego.y - 300,
             z: ego.z + dimensions.depth / 2,
         }
     };

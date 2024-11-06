@@ -1,3 +1,5 @@
+//main.js
+
 import { loadWorldObjects } from './worldLoader.js';
 import { renderScene } from './render.js';
 import { updateMovement, shoot, initiateJump, createPlayerHitbox, resetMovement, updateBullets } from './mechanics.js';

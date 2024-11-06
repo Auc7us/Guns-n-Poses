@@ -1,3 +1,5 @@
+//worldloarder.js
+
 export async function loadVertices(obj) {
     try {
         const response = await fetch("objects/" + obj);

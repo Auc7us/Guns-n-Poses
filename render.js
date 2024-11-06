@@ -1,6 +1,7 @@
 // render.js
 
 import { calculateDistance, translateObj, rotateObj, hermiteDerivative, hermiteInterpolation} from './utils.js';
+
 let platformPositionT = 0;
 const platformSpeed = 0.005;
 let platformDirection = 1;
@@ -313,7 +314,7 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const platformInfo = updateFloatingPlatformPosition(P0, P1, T0, T1, P_0, P_1, T_0, T_1);
     drawFloatingPlatform(platform, platform_grid, ego, canvas, fovSlider, pitch, yaw, dy, platformInfo);
     
-    if (keysPressed['r']) {
+    if (keysPressed['v']) {
         drawHermiteCurve(P0, P1, T0, T1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'pink'); // Main curve 1
         drawHermiteCurve(P_0, P_1, T_0, T_1, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'); // Main curve 2
     }
@@ -372,28 +373,25 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     const projectedGun = transformedGun.map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     drawObj(projectedGun, "green", canvas, false, false);
 
-    function drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw) {
-        // Define the corners of the collision box
-        const corners = [
-            { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
-            { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
-            { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
-            { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
-            { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
-            { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
-            { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.max.z },
-            { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.max.z }
-        ];
-    
-        // Project the 3D corners to 2D screen coordinates
-        const projectedPoints = corners
-            .map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw))
-            .filter(point => point !== null);
-    
-        // Draw the box using drawObj
-        drawObj(projectedPoints, 'red', canvas, true, false, 2); // Red outline for debugging
-    }
-    drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw);
+    // function drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw) {
+    //     const corners = [
+    //         { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
+    //         { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.min.z },
+    //         { x: playerHitbox.max.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
+    //         { x: playerHitbox.min.x, y: playerHitbox.min.y, z: playerHitbox.max.z },
+    //         { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
+    //         { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.min.z },
+    //         { x: playerHitbox.max.x, y: playerHitbox.max.y, z: playerHitbox.max.z },
+    //         { x: playerHitbox.min.x, y: playerHitbox.max.y, z: playerHitbox.max.z }
+    //     ];
+
+    //     const projectedPoints = corners
+    //         .map(corner => projectPoint(corner, ego, fovSlider, canvas, pitch, yaw))
+    //         .filter(point => point !== null);
+
+    //     drawObj(projectedPoints, 'red', canvas, true, false, 2); 
+    // }
+    // drawCollisionBox(canvas, playerHitbox, ego, fovSlider, pitch, yaw);
 
     
 
