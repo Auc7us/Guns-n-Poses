@@ -55,49 +55,37 @@ export function calculateBoundingBox(vertices) {
 }
 
 function calculateYAtXZ(x, z, vertices) {
-    // Check if the polygon is flat
     if (vertices.every(v => v.y === vertices[0].y)) {
-        return vertices[0].y; // Return constant y if flat
+        return vertices[0].y; 
     }
 
-    // Otherwise, calculate y using the plane equation
-
-    // Assume the polygon is defined by at least three vertices
     const [p1, p2, p3] = vertices;
-
-    // Calculate the plane coefficients A, B, C, D based on three vertices
     const A = (p2.y - p1.y) * (p3.z - p1.z) - (p2.z - p1.z) * (p3.y - p1.y);
     const B = (p2.z - p1.z) * (p3.x - p1.x) - (p2.x - p1.x) * (p3.z - p1.z);
     const C = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
     const D = -(A * p1.x + B * p1.y + C * p1.z);
 
-    // Check if C is zero to avoid division by zero
-    if (C === 0) {
+    if (B === 0) {
         console.warn("Plane is vertical, can't compute y from x and z alone.");
         return NaN;
     }
-
-    // Calculate y at (x, z) using the plane equation
     const y = -(A * x + C * z + D) / B;
     return y;
 }
 
-export function getHeightAtPosition(x, z, playerY) {
-    let closestY = NaN;
+export function getHeightAtPosition(x, z, playerFeetY) {
+    let retVal = 5000;
 
     groundPolygons.forEach(({ vertices, boundingBox }) => {
-        if (x >= boundingBox.minX && x <= boundingBox.maxX &&
-            z >= boundingBox.minZ && z <= boundingBox.maxZ) {
-            
+        if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
+            // console.warn("Ground Polygon Found");
             const yAtXZ = calculateYAtXZ(x, z, vertices);
-
-            if (!isNaN(yAtXZ) && yAtXZ <= playerY) {
-                if (isNaN(closestY) || yAtXZ > closestY) {
-                    closestY = yAtXZ;
-                }
+            if (!isNaN(yAtXZ) &&( yAtXZ >= playerFeetY || playerFeetY - yAtXZ <= 1000)) { // ground exists ie y @ x,z is not NaN, and playerFeet are above the height of ground at that point  
+                // console.log(`yAtXZ: ${yAtXZ}`);
+                retVal = yAtXZ;
             }
         }
     });
 
-    return closestY;
+    return retVal;
 }

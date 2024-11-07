@@ -28,6 +28,7 @@ async function world() {
     let dx = 2000;
     let dy = 100;
     let dz = 2500;//-16000;
+    let groundY = 2000;
     const origY = dy;
     var ego = { x: dx, y: dy, z: dz };
     let mouseSensitivityConst = 0.001;
@@ -74,7 +75,7 @@ async function world() {
             if (event.key === ' ') {
                 crouch = false;
                 ego.y = origY;
-                initiateJump(isJumping, ego, jumpHeight, gravity, delT);
+                initiateJump(isJumping, ego, jumpHeight, gravity, groundY, delT);
             }
     
             if (event.key.toLowerCase() === 'c') {
@@ -149,7 +150,7 @@ async function world() {
     setInterval(() => {
         updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed);
         const playerHitbox = createPlayerHitbox(ego, playerDimensions);
-        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, mainCurveSegments, leftRailSegments, rightRailSegments);
+        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments);
     }, 1000 * delT); 
 }
 

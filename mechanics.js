@@ -49,11 +49,11 @@ export function resetMovement() {
     pace = 0;
 }
 
-export function initiateJump(isJumping, ego, jumpHeight, gravity, deltaTime) {
+export function initiateJump(isJumping, ego, jumpHeight, gravity, groundY, deltaTime) {
     if (isJumping) return;
     isJumping = true;
     let velocity = Math.sqrt(-2 * gravity * jumpHeight);;
-    const originalY = ego.y;
+    const originalY = groundY - 2000 + ego.y;
 
     function jumpAnimation() {
         velocity += gravity * deltaTime;

@@ -7,21 +7,21 @@ import {calculateBoundingBox} from './groundMechanics.js';
 
 export const groundPolygons = [];
 
-export function placeObj(obj, rot, loc, ego, fovSlider, canvas, pitch, yaw, color, fillShape = false, thickness = 1) {
+export function placeObj(obj, rot, loc, ego, fovSlider, canvas, pitch, yaw, color, fillShape = false, thickness = 1, groundElement = 0) {
     const rotatedObj = rotateObj(obj, rot.angle, rot.axis);
     const translatedObj = translateObj(rotatedObj, loc.x, loc.y, loc.z);
     const projectedObj = translatedObj.map(corner => renderUtils.projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     renderUtils.drawObj(projectedObj, color, canvas, fillShape, thickness, ego.y);
     const boundingBox = calculateBoundingBox(translatedObj);
-    groundPolygons.push({ vertices: translatedObj, boundingBox });
+    if (groundElement === 1) groundPolygons.push({ vertices: translatedObj, boundingBox });
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff, yOff = 0, rot = {angle: 0, axis:[0, 1, 0]}) {
     const segmentSize = 1000; 
 
     for (let z = startZ; z >= endZ; z -= segmentSize) {
-        placeObj(base, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "ground", true, 1);
-        placeObj(grid, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1);
+        placeObj(base, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "ground", true, 1, 1);
+        placeObj(grid, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1, 1);
     }
 }
 
@@ -31,7 +31,7 @@ export function drawFloatingPlatform(obj, grid, ego, canvas, fovSlider, pitch, y
     const zOff = position.z;
     const angle = -1*Math.atan2(tangent.z, tangent.x);
    
-    placeObj(obj, {angle: angle, axis:[0, 1, 0]}, {x: xOff, y: 0, z: zOff}, ego, fovSlider, canvas, pitch, yaw, "#5C4033", true, 1);
-    placeObj(grid, {angle: angle, axis:[0, 1, 0]}, {x: xOff, y: 0, z: zOff}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1);
+    placeObj(obj, {angle: angle, axis:[0, 1, 0]}, {x: xOff, y: 0, z: zOff}, ego, fovSlider, canvas, pitch, yaw, "#5C4033", true, 1, 1);
+    placeObj(grid, {angle: angle, axis:[0, 1, 0]}, {x: xOff, y: 0, z: zOff}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1, 1);
 
 }

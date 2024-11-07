@@ -4,9 +4,9 @@
 import { calculateDistance} from './utils.js';
 import {updateFloatingPlatformPosition, getHeightAtPosition} from './groundMechanics.js';
 import * as renderUtils from './renderUtils.js';
-import { drawGroundSegments, drawFloatingPlatform, placeObj} from './levelBuilder.js';
+import { groundPolygons, drawGroundSegments, drawFloatingPlatform, placeObj} from './levelBuilder.js';
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, mainCurveSegments, leftRailSegments, rightRailSegments) {
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
@@ -14,9 +14,9 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     }
 
     if (ego.z < 0) {
-        const groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900);
+        groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900);
 
-        console.log(`Player at (${ego.x}, ${ego.z}) - Ground Height: ${groundY}`);
+        console.log(`Player at (${ego.x}, ${ego.z}) - Ground Height: ${-groundY+2000}`);
 
         if (isNaN(groundY)) {
             console.log("No ground detected below the player!");
@@ -25,6 +25,10 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
             ego.y = groundY - 1900;
         }
     }
+
+    console.log(`groundY: ${groundY}`);
+
+    groundPolygons.length = 0;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = 'black';
@@ -49,8 +53,8 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
         mainCurveSegments.forEach(segment => renderUtils.drawHermiteCurve(segment, segments, ego, fovSlider, canvas, pitch, yaw, context, '4', 'yellow'));
     }
 
-    placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x: 18000, y: -2000, z: -53000}, ego, fovSlider, canvas, pitch, yaw, "cyan", false, 1);
-    placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x:     0, y: -2000, z:      0}, ego, fovSlider, canvas, pitch, yaw,  "red", false, 1);
+    placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x: 18000, y: -2000, z: -53000}, ego, fovSlider, canvas, pitch, yaw, "cyan", false, 1, 0);
+    placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x:     0, y: -2000, z:      0}, ego, fovSlider, canvas, pitch, yaw,  "red", false, 1, 0);
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -15000, -19000,  4000,      0); 
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,      0,  -2000,  4000,      0);
     drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -5000,  -5900,  4000,   1000, {angle: 3.14/2, axis:[1, 0, 0]});
