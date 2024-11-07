@@ -1,7 +1,7 @@
 // player mechanics.js
 // Contains Player Movement, Gun and Bullet mechanics
 
-export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed) {
+export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, deltaTime) {
     const pace = keysPressed['shift'] ? 133 : 90;
 
     const cosYaw = Math.cos(yaw);
@@ -23,6 +23,18 @@ export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed) {
     if (keysPressed['s']) {
         ego.x -= pace * sinYaw; 
         ego.z += pace * cosYaw;
+    }
+
+    if (ego.isJumping) {
+        ego.velocityY += gravity * deltaTime; // Apply gravity to vertical velocity
+        ego.y -= ego.velocityY * deltaTime;   // Update the player's Y position
+
+        // Check if player has landed
+        if (ego.y >= groundY) {
+            ego.y = groundY;         // Reset y position to ground level
+            ego.isJumping = false;   // End the jump
+            ego.velocityY = 0;       // Reset vertical velocity
+        }
     }
 
     updateBullets(bullets, ego, bulletSpeed);
@@ -49,24 +61,13 @@ export function resetMovement() {
     pace = 0;
 }
 
-export function initiateJump(isJumping, ego, jumpHeight, gravity, groundY, deltaTime) {
-    if (isJumping) return;
+export function initiateJump(isJumping, ego, jumpHeight, gravity) {
+    if (isJumping) return; // Ensure no double-jumping occurs
     isJumping = true;
-    let velocity = Math.sqrt(-2 * gravity * jumpHeight);;
-    const originalY = groundY - 2000 + ego.y;
 
-    function jumpAnimation() {
-        velocity += gravity * deltaTime;
-        ego.y -= velocity * deltaTime;
-
-        if (ego.y >= originalY) {
-            ego.y = originalY;
-            isJumping = false;
-        } else {
-            requestAnimationFrame(jumpAnimation);
-        }
-    }
-    jumpAnimation();
+    // Set initial upward velocity for the jump
+    ego.velocityY = Math.sqrt(-2 * gravity * jumpHeight); 
+    ego.isJumping = true;  // Mark player as jumping
 }
 
 export function shoot(isCharged, ego, bullets, bullet, yaw, pitch, chargedBulletScale) {

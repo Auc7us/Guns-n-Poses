@@ -75,7 +75,7 @@ async function world() {
             if (event.key === ' ') {
                 crouch = false;
                 ego.y = origY;
-                initiateJump(isJumping, ego, jumpHeight, gravity, groundY, delT);
+                initiateJump(ego.isJumping, ego, jumpHeight, gravity);
             }
     
             if (event.key.toLowerCase() === 'c') {
@@ -148,7 +148,7 @@ async function world() {
     });
 
     setInterval(() => {
-        updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed);
+        updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, delT);
         const playerHitbox = createPlayerHitbox(ego, playerDimensions);
         renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments);
     }, 1000 * delT); 
