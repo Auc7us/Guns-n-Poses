@@ -25,16 +25,13 @@ export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, grav
         ego.z += pace * cosYaw;
     }
 
+    // Jump or free-fall mechanics
     if (ego.isJumping) {
-        ego.velocityY += gravity * deltaTime; // Apply gravity to vertical velocity
-        ego.y -= ego.velocityY * deltaTime;   // Update the player's Y position
-
-        // Check if player has landed
-        if (ego.y >= groundY) {
-            ego.y = groundY;         // Reset y position to ground level
-            ego.isJumping = false;   // End the jump
-            ego.velocityY = 0;       // Reset vertical velocity
-        }
+        console.log("Calling jump function");
+        jump(ego, gravity, deltaTime);
+    } else if (ego.isFreeFalling) {
+        // console.log("Calling freeFall function to check if above ground");
+        freeFall(ego, gravity, groundY, deltaTime);
     }
 
     updateBullets(bullets, ego, bulletSpeed);
@@ -61,13 +58,37 @@ export function resetMovement() {
     pace = 0;
 }
 
-export function initiateJump(isJumping, ego, jumpHeight, gravity) {
-    if (isJumping) return; // Ensure no double-jumping occurs
-    isJumping = true;
+export function initiateJump(ego, jumpHeight, gravity) {
+    console.log(`ego is jumping? : ${ego.isJumping}`);
+    if (ego.isJumping) {
+        console.log("Jump initiation skipped: Already jumping or free-falling");
+        return;
+    };
+    ego.isJumping = true;
+    ego.isFreeFalling = false;
+    ego.velocityY = Math.sqrt(-2 * gravity * jumpHeight);
+    // console.log(`Jump initiated: velocityY=${ego.velocityY}, isJumping=${ego.isJumping}`); 
+}
 
-    // Set initial upward velocity for the jump
-    ego.velocityY = Math.sqrt(-2 * gravity * jumpHeight); 
-    ego.isJumping = true;  // Mark player as jumping
+export function jump(ego, gravity, deltaTime) {
+    if ( ego.isFreeFalling === false) {
+        ego.velocityY += gravity * deltaTime; // Gravity reduces upward velocity
+        ego.y -= ego.velocityY * deltaTime;   // Move up based on velocity
+        // console.log(`Updated jump position: velocityY=${ego.velocityY}, ego.y=${ego.y}`);
+    }
+}
+
+export function freeFall(ego, gravity, groundY, deltaTime) {
+    // Continue falling if above ground
+    if (ego.onGround === false) {
+        ego.velocityY += gravity * deltaTime;
+        ego.y -= ego.velocityY * deltaTime;
+        console.log(`Updated free-fall position: velocityY=${ego.velocityY}, ego.y=${ego.y}`);
+    } else { //if overshot to go below ground 
+        // console.log("Already on ground");
+        ego.y = groundY - 1900;      // Land on the ground
+        ego.velocityY = 0;
+    }
 }
 
 export function shoot(isCharged, ego, bullets, bullet, yaw, pitch, chargedBulletScale) {

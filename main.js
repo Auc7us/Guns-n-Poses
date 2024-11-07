@@ -30,7 +30,15 @@ async function world() {
     let dz = 2500;//-16000;
     let groundY = 2000;
     const origY = dy;
-    var ego = { x: dx, y: dy, z: dz };
+    var ego = { 
+        x: dx, 
+        y: dy, 
+        z: dz, 
+        velocityY: 0,        // Vertical velocity
+        isJumping: false,    // Track if currently jumping
+        isFreeFalling: false, // Track if currently in free fall
+        onGround: true
+    };    
     let mouseSensitivityConst = 0.001;
     let mouseSensitivity = 0;
     const pitchLimit = Math.PI / 3 - 0.01; 
@@ -44,7 +52,7 @@ async function world() {
     
     let bullets = [];
     const bulletSpeed = 5000;//1500;
-    let isJumping = false;
+    // let isJumping = false;
     const jumpHeight = 5000 //4000; // gotta check if this is a realistic height for jump in mm
     const gravity = -9800 //-6000;
     const delT = 0.01667;
@@ -74,8 +82,9 @@ async function world() {
 
             if (event.key === ' ') {
                 crouch = false;
-                ego.y = origY;
-                initiateJump(ego.isJumping, ego, jumpHeight, gravity);
+                // ego.y = origY;
+                initiateJump(ego, jumpHeight, gravity);
+                console.log(`After initiateJump: isJumping=${ego.isJumping}, velocityY=${ego.velocityY}`);
             }
     
             if (event.key.toLowerCase() === 'c') {

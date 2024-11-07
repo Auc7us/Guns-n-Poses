@@ -16,17 +16,35 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     if (ego.z < 0) {
         groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900);
 
-        console.log(`Player at (${ego.x}, ${ego.z}) - Ground Height: ${-groundY+2000}`);
+        // console.log(`Player at (${ego.x}, ${ego.z}) - Ground Height: ${-groundY+2000}`);
 
         if (isNaN(groundY)) {
-            console.log("No ground detected below the player!");
+            // console.log("No ground detected below the player!");
         } else {
             // Adjust `ego.y` based on groundY, considering the feet offset
             ego.y = groundY - 1900;
         }
     }
 
-    console.log(`groundY: ${groundY}`);
+    // console.warn(`groundY: ${groundY}`) 
+    if (groundY - (ego.y + 1900) > 0) {
+        ego.onGround = false;
+        console.log(`Player above ground : ${groundY - (ego.y + 1900)} mm`);
+    } 
+    
+    else if (groundY - (ego.y + 1900) <= 0) {
+        ego.onGround = true;
+    } 
+
+
+    if (ego.velocityY >= 0) {
+        // console.log("might be in free fall");
+        ego.isJumping = false;      // End the jump phase
+        ego.isFreeFalling = true;   // Begin free fall
+        console.log(`onGround: ${ego.onGround}`);
+    }
+    
+    // console.log(`ego.y + 1900 - groundY: ${ego.y + 1900 - groundY}`);
 
     groundPolygons.length = 0;
 
