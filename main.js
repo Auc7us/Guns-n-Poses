@@ -30,6 +30,7 @@ async function world() {
     let dz = 2500;//-16000;
     let groundY = 2000;
     const origY = dy;
+    const absGround = 5000;
     var ego = { 
         x: dx, 
         y: dy, 
@@ -159,7 +160,8 @@ async function world() {
     setInterval(() => {
         updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, delT);
         const playerHitbox = createPlayerHitbox(ego, playerDimensions);
-        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments);
+        renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed,
+             platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments, absGround);
     }, 1000 * delT); 
 }
 

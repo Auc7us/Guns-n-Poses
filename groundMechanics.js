@@ -73,8 +73,8 @@ function calculateYAtXZ(x, z, vertices) {
     return y;
 }
 
-export function getHeightAtPosition(x, z, playerFeetY) {
-    let retVal = 5000;
+export function getHeightAtPosition(x, z, playerFeetY, absGround) {
+    let retVal = absGround;
 
     groundPolygons.forEach(({ vertices, boundingBox }) => {
         if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
