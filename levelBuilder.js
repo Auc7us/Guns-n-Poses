@@ -3,12 +3,17 @@
 
 import { translateObj, rotateObj} from './utils.js';
 import * as renderUtils from './renderUtils.js';
+import {calculateBoundingBox} from './groundMechanics.js';
+
+export const groundPolygons = [];
 
 export function placeObj(obj, rot, loc, ego, fovSlider, canvas, pitch, yaw, color, fillShape = false, thickness = 1) {
     const rotatedObj = rotateObj(obj, rot.angle, rot.axis);
     const translatedObj = translateObj(rotatedObj, loc.x, loc.y, loc.z);
     const projectedObj = translatedObj.map(corner => renderUtils.projectPoint(corner, ego, fovSlider, canvas, pitch, yaw)).filter(point => point !== null);
     renderUtils.drawObj(projectedObj, color, canvas, fillShape, thickness, ego.y);
+    const boundingBox = calculateBoundingBox(translatedObj);
+    groundPolygons.push({ vertices: translatedObj, boundingBox });
 }
 
 export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff, yOff = 0, rot = {angle: 0, axis:[0, 1, 0]}) {

@@ -2,7 +2,7 @@
 // Contains  functions for Game World Creation and Rendering
 
 import { calculateDistance} from './utils.js';
-import {updateFloatingPlatformPosition} from './groundMechanics.js';
+import {updateFloatingPlatformPosition, getHeightAtPosition} from './groundMechanics.js';
 import * as renderUtils from './renderUtils.js';
 import { drawGroundSegments, drawFloatingPlatform, placeObj} from './levelBuilder.js';
 
@@ -11,6 +11,19 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
     if (!context) {
         console.error('Failed to get canvas context!');
         return;
+    }
+
+    if (ego.z < 0) {
+        const groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900);
+
+        console.log(`Player at (${ego.x}, ${ego.z}) - Ground Height: ${groundY}`);
+
+        if (isNaN(groundY)) {
+            console.log("No ground detected below the player!");
+        } else {
+            // Adjust `ego.y` based on groundY, considering the feet offset
+            ego.y = groundY - 1900;
+        }
     }
 
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -38,16 +51,16 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x: 18000, y: -2000, z: -53000}, ego, fovSlider, canvas, pitch, yaw, "cyan", false, 1);
     placeObj(cube, {angle: 0, axis:[0, 1, 0]}, {x:     0, y: -2000, z:      0}, ego, fovSlider, canvas, pitch, yaw,  "red", false, 1);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -15000 , -19000,  4000,      0); 
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,      0 ,  -2000,  4000,      0);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -5000 ,  -5900,  4000,   1000, {angle: 3.14/2, axis:[1, 0, 0]});
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -3000 ,  -5000,  4000,  -1000);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -8000 ,  -8900,  4000,      0, {angle: 3.14/2, axis:[1, 0, 0]});
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -6000 ,  -8000,  4000,  -2000);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -12000 , -14000,  4000,  -4000);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -14000 , -14900,  4000,  -2000, {angle: 3.14/2, axis:[1, 0, 0]});
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -9000 , -11000,  4000,  -3000);
-    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -11000 , -11900,  4000,  -1000, {angle: 3.14/2, axis:[1, 0, 0]});
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -15000, -19000,  4000,      0); 
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,      0,  -2000,  4000,      0);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -5000,  -5900,  4000,   1000, {angle: 3.14/2, axis:[1, 0, 0]});
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -3000,  -5000,  4000,  -1000);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -8000,  -8900,  4000,      0, {angle: 3.14/2, axis:[1, 0, 0]});
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -6000,  -8000,  4000,  -2000);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -12000, -14000,  4000,  -4000);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -14000, -14900,  4000,  -2000, {angle: 3.14/2, axis:[1, 0, 0]});
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy,  -9000, -11000,  4000,  -3000);
+    drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, -11000, -11900,  4000,  -1000, {angle: 3.14/2, axis:[1, 0, 0]});
 
     bullets.forEach((bullet) => {
         const translatedBullet = bullet.shape.map(point => {
