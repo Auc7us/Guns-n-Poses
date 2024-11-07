@@ -1,4 +1,5 @@
 // groundMechanics.js
+// Contains mechanics functions for defining object movement in the scene
 
 let platformPositionT = 0;
 const platformSpeed = 0.005;

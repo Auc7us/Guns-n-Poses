@@ -1,4 +1,22 @@
 // utils.js
+// Contains general utility functions used by different scripts
+
+export class CurveSegment {
+    constructor(P0, P1, T0, T1) {
+        this.P0 = P0;
+        this.P1 = P1;
+        this.T0 = T0;
+        this.T1 = T1;
+    }
+
+    getInterpolatedPoint(t) {
+        return hermiteInterpolation(t, this.P0, this.P1, this.T0, this.T1);
+    }
+
+    getTangent(t) {
+        return hermiteDerivative(t, this.P0, this.P1, this.T0, this.T1);
+    }
+}
 
 export function calculateDistance(fov) {
     const fovRadians = (fov * Math.PI) / 180;
@@ -77,23 +95,4 @@ export function normalizeVector(vector) {
         z: vector.z / magnitude
     };
 }
-
-// export function evaluateBSpline(controlPoints, i, t) {
-//     const P0 = controlPoints[i];
-//     const P1 = controlPoints[i + 1];
-//     const P2 = controlPoints[i + 2];
-//     const P3 = controlPoints[i + 3];
-
-//     const B0 = ((1 - t) ** 3) / 6;
-//     const B1 = (3 * t ** 3 - 6 * t ** 2 + 4) / 6;
-//     const B2 = (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6;
-//     const B3 = (t ** 3) / 6;
-
-//     const x = B0 * P0.x + B1 * P1.x + B2 * P2.x + B3 * P3.x;
-//     const y = B0 * P0.y + B1 * P1.y + B2 * P2.y + B3 * P3.y;
-//     const z = B0 * P0.z + B1 * P1.z + B2 * P2.z + B3 * P3.z;
-
-//     return { x, y, z };
-// }
-
 

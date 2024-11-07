@@ -1,4 +1,5 @@
 //worldloarder.js
+import { CurveSegment} from './utils.js';
 
 export async function loadVertices(obj) {
     try {
@@ -23,6 +24,11 @@ export async function loadWorldObjects() {
     const muzzle = await loadVertices('fm.json');
     const platform = await loadVertices('platform.json');
     const platform_grid = await loadVertices('platform_grid.json');
+
+    const curveData = await loadVertices('platform_track.json');
+    const mainCurveSegments = curveData.mainCurveSegments.map(segment => new CurveSegment(segment.P0, segment.P1, segment.T0, segment.T1));
+    const  leftRailSegments = curveData.leftRailSegments.map( segment => new CurveSegment(segment.P0, segment.P1, segment.T0, segment.T1));
+    const rightRailSegments = curveData.rightRailSegments.map(segment => new CurveSegment(segment.P0, segment.P1, segment.T0, segment.T1));
     
     return {
         base,
@@ -32,6 +38,9 @@ export async function loadWorldObjects() {
         gun,
         muzzle,
         platform,
-        platform_grid
+        platform_grid,
+        mainCurveSegments,
+        leftRailSegments,
+        rightRailSegments
     };
 }
