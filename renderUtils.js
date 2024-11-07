@@ -1,4 +1,5 @@
 // renderUtils.js
+// Projection and Drawing functions 
 
 export function drawAimPoint(canvas, color = 'white', size = 20, lineWidth = 0.5) {
     const context = canvas.getContext('2d');
@@ -65,7 +66,7 @@ export function projectPoint(point, camera, fovSlider, canvas, pitch, yaw) {
     return { x: xProjected, y: yProjected };
 }
 
-export function drawObj(projectedPoints, objColor = '#FF33A6', canvas, fillShape = false, lineWidth = 2, dy) {
+export function drawObj(projectedPoints, objColor = '#FF33A6', canvas, fillShape = false, lineWidth = 2, dy, objHeight = 2000) {
     if (projectedPoints.length < 2) return;
 
     const context = canvas.getContext('2d');
@@ -82,7 +83,7 @@ export function drawObj(projectedPoints, objColor = '#FF33A6', canvas, fillShape
 
     if (fillShape) {
         context.lineTo(flippedPoints[0].x, flippedPoints[0].y);
-        if (objColor === 'ground') {objColor = dy - 2000 <= 0 ? '#909090' : '#202020';}
+        if (objColor === 'ground') {objColor = dy - objHeight <= 0 ? '#909090' : '#202020';}
         context.fillStyle = objColor;
         context.fill();
     } else {

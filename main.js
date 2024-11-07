@@ -1,4 +1,4 @@
-//main.js
+// main.js
 
 import { loadWorldObjects } from './worldLoader.js';
 import { renderScene } from './render.js';
@@ -39,12 +39,12 @@ async function world() {
     let chargedBulletScale = 1;
     let shootingInterval = null;
 
-    const { base, grid, cube, bullet, gun, muzzle, platform, platform_grid, mainCurveSegments, leftRailSegments, rightRailSegments } = await loadWorldObjects();
+    const { base, grid, cube, bullet, gun, platform, platform_grid, mainCurveSegments, leftRailSegments, rightRailSegments } = await loadWorldObjects();
     
     let bullets = [];
     const bulletSpeed = 5000;//1500;
     let isJumping = false;
-    const jumpHeight = 7000 //4000; // gotta check if this is a realistic height for jump in mm
+    const jumpHeight = 5000 //4000; // gotta check if this is a realistic height for jump in mm
     const gravity = -9800 //-6000;
     const delT = 0.01667;
     let crouch = false;

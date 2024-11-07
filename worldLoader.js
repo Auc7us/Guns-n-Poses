@@ -1,4 +1,6 @@
 //worldloarder.js
+// Loads in objects
+
 import { CurveSegment} from './utils.js';
 
 export async function loadVertices(obj) {
@@ -36,7 +38,7 @@ export async function loadWorldObjects() {
         cube,
         bullet,
         gun,
-        muzzle,
+        // muzzle,
         platform,
         platform_grid,
         mainCurveSegments,

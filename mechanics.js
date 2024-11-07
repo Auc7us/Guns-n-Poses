@@ -1,4 +1,4 @@
-//player mechanics.js
+// player mechanics.js
 // Contains Player Movement, Gun and Bullet mechanics
 
 export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed) {

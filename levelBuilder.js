@@ -11,12 +11,12 @@ export function placeObj(obj, rot, loc, ego, fovSlider, canvas, pitch, yaw, colo
     renderUtils.drawObj(projectedObj, color, canvas, fillShape, thickness, ego.y);
 }
 
-export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff) {
+export function drawGroundSegments(base, grid, ego, canvas, fovSlider, pitch, yaw, dy, startZ, endZ, xOff, yOff = 0, rot = {angle: 0, axis:[0, 1, 0]}) {
     const segmentSize = 1000; 
 
     for (let z = startZ; z >= endZ; z -= segmentSize) {
-        placeObj(base, {angle: 0, axis:[0, 1, 0]}, {x: xOff, y: 0, z: z}, ego, fovSlider, canvas, pitch, yaw, "ground", true, 1);
-        placeObj(grid, {angle: 0, axis:[0, 1, 0]}, {x: xOff, y: 0, z: z}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1);
+        placeObj(base, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "ground", true, 1);
+        placeObj(grid, {angle: rot.angle, axis: rot.axis}, {x: xOff, y: yOff, z: z}, ego, fovSlider, canvas, pitch, yaw, "black", false, 1);
     }
 }
 
