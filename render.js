@@ -2,43 +2,43 @@
 // Contains  functions for Game World Creation and Rendering
 
 import { calculateDistance} from './utils.js';
-import {updateFloatingPlatformPosition, getHeightAtPosition} from './groundMechanics.js';
+import {updateFloatingPlatformPosition} from './groundMechanics.js';
 import * as renderUtils from './renderUtils.js';
 import { groundPolygons, drawGroundSegments, drawFloatingPlatform, placeObj} from './levelBuilder.js';
 
-export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments, absGround) {
+export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed, platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments) {
     const context = canvas.getContext('2d');
     if (!context) {
         console.error('Failed to get canvas context!');
         return;
     }
 
-    if (ego.z < 0) {
-        groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900, absGround);
+    // if (ego.z < 0) {
+    //     groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900, absGround);
 
-        if (isNaN(groundY)) {
-        } else {
-            ego.y = groundY - 1900;
-        }
-    }
+    //     if (isNaN(groundY)) {
+    //     } else {
+    //         ego.y = groundY - 1900;
+    //     }
+    // }
 
-    // console.warn(`groundY: ${groundY}`) 
-    if (groundY - (ego.y + 1900) > 0) {
-        ego.onGround = false;
-        console.log(`Player above ground : ${groundY - (ego.y + 1900)} mm`);
-    } 
+    // // console.warn(`groundY: ${groundY}`) 
+    // if (groundY - (ego.y + 1900) > 0) {
+    //     ego.onGround = false;
+    //     console.log(`Player above ground : ${groundY - (ego.y + 1900)} mm`);
+    // } 
     
-    else if (groundY - (ego.y + 1900) <= 0) {
-        ego.onGround = true;
-    } 
+    // else if (groundY - (ego.y + 1900) <= 0) {
+    //     ego.onGround = true;
+    // } 
 
 
-    if (ego.velocityY >= 0) {
-        // console.log("might be in free fall");
-        ego.isJumping = false;
-        ego.isFreeFalling = true;
-        // console.log(`onGround: ${ego.onGround}`);
-    }
+    // if (ego.velocityY >= 0) {
+    //     // console.log("might be in free fall");
+    //     ego.isJumping = false;
+    //     ego.isFreeFalling = true;
+    //     // console.log(`onGround: ${ego.onGround}`);
+    // }
 
     groundPolygons.length = 0;
 

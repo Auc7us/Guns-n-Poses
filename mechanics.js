@@ -1,7 +1,9 @@
 // player mechanics.js
 // Contains Player Movement, Gun and Bullet mechanics
+import {getHeightAtPosition} from './groundMechanics.js';
 
-export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, deltaTime) {
+export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, deltaTime, absGround) {
+    console.log(`updateMovement: isJumping=${ego.isJumping}, isFreeFalling=${ego.isFreeFalling}, onGround=${ego.onGround}`);
     const pace = keysPressed['shift'] ? 133 : 90;
 
     const cosYaw = Math.cos(yaw);
@@ -25,14 +27,43 @@ export function updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, grav
         ego.z += pace * cosYaw;
     }
 
-    // Jump or free-fall mechanics
+    // Update vertical movement and ground logic
+    if (ego.z < 0) {
+        groundY = getHeightAtPosition(ego.x, ego.z, ego.y + 1900, absGround);
+        console.log(`groundY: ${groundY}`);
+
+        if (!isNaN(groundY)) {
+            // Adjust player's vertical position if below the ground
+            if (ego.y + 1900 > groundY) {
+                ego.y = groundY - 1900;
+                ego.velocityY = 0; // Reset velocity when landing
+                ego.isJumping = false;
+                ego.isFreeFalling = false;
+                ego.onGround = true;
+                console.log("Player landed on the ground");
+            }
+        }
+    }
+
+    // Check if the player is in free-fall or on the ground
+    if (groundY - (ego.y + 1900) > 0) {
+        ego.onGround = false;
+        console.log(`Player above ground : ${groundY - (ego.y + 1900)} mm`);
+        if (!ego.isJumping) ego.isFreeFalling = true; // Only free-fall if not jumping
+    } else {
+        ego.onGround = true;
+        ego.isFreeFalling = false; // Stop free-fall when on the ground
+    }
+
+    // Handle jumping and free-fall mechanics
     if (ego.isJumping) {
         console.log("Calling jump function");
         jump(ego, gravity, deltaTime);
     } else if (ego.isFreeFalling) {
-        // console.log("Calling freeFall function to check if above ground");
+        console.log("Calling freeFall function");
         freeFall(ego, gravity, groundY, deltaTime);
     }
+
 
     updateBullets(bullets, ego, bulletSpeed);
 }

@@ -158,10 +158,10 @@ async function world() {
     });
 
     setInterval(() => {
-        updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, delT);
+        updateMovement(ego, keysPressed, yaw, bullets, bulletSpeed, gravity, groundY, delT, absGround);
         const playerHitbox = createPlayerHitbox(ego, playerDimensions);
         renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, ego, pitch, yaw, dy, keysPressed,
-             platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments, absGround);
+             platform, platform_grid, playerHitbox, groundY, mainCurveSegments, leftRailSegments, rightRailSegments);
     }, 1000 * delT); 
 }
 
