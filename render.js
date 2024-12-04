@@ -15,7 +15,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
 
     if (ego.z < 0) {
         groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900, absGround);
-        console.log(`groundY: ${groundY}`);
 
         if (isNaN(groundY)) {
         } else {

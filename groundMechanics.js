@@ -74,7 +74,7 @@ function calculateYAtXZ(x, z, vertices) {
 }
 
 export function getHeightAtPosition(x, z, playerFeetY, absGround) {
-    let retVal = absGround;
+    let retVal = absGround; //  default ground height when no specific ground polygon or object is found beneath the player
 
     groundPolygons.forEach(({ vertices, boundingBox }) => {
         if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
