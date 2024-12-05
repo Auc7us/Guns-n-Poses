@@ -1,3 +1,5 @@
+//mechanicsGL.js
+
 export function updateMovement(ego, gravity, keysPressed, yaw, pitch, speed, deltaTime, groundY, absGround) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
@@ -34,7 +36,7 @@ export function updateMovement(ego, gravity, keysPressed, yaw, pitch, speed, del
     // Ground collision detection
     if (ego.z < 0) {
         groundY = getHeightAtPosition(ego.x, ego.z, playerFeetY, absGround);
-        groundY = 0;
+        // groundY = 0;
 
         if (!isNaN(groundY) && playerFeetY < groundY) {
             // Land on the ground

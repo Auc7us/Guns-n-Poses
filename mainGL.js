@@ -1,3 +1,5 @@
+// mainGL.js
+
 import { loadWorldObjects } from './worldLoaderGL.js';
 import { renderScene } from './renderGL.js';
 import { createShader, createProgram } from './utilsGL.js';
@@ -8,7 +10,7 @@ async function main() {
     const gl = canvas.getContext('webgl');
     const gravity = -9800;
     const jumpHeight = 5000;
-    const absGround = -2000;
+    const absGround = -4000;
     const groundY = 0;
 
     if (!gl) {
@@ -65,7 +67,7 @@ async function main() {
     };
 
     const light = {
-        direction: vec3.normalize([], [1, -1, 0]),
+        direction: vec3.normalize([], [1, -1, -1]),
         color: [1, 1, 1],
     };
 

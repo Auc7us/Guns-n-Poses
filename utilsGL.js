@@ -1,12 +1,5 @@
-// utils.js
+// utilsGL.js
 
-/**
- * Creates and compiles a shader.
- * @param {WebGLRenderingContext} gl - WebGL context
- * @param {number} type - Type of shader (gl.VERTEX_SHADER or gl.FRAGMENT_SHADER)
- * @param {string} source - GLSL source code for the shader
- * @returns {WebGLShader} Compiled shader
- */
 export function createShader(gl, type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -22,13 +15,6 @@ export function createShader(gl, type, source) {
     return shader;
 }
 
-/**
- * Creates and links a WebGL program.
- * @param {WebGLRenderingContext} gl - WebGL context
- * @param {WebGLShader} vertexShader - Compiled vertex shader
- * @param {WebGLShader} fragmentShader - Compiled fragment shader
- * @returns {WebGLProgram} Linked WebGL program
- */
 export function createProgram(gl, vertexShader, fragmentShader) {
     const program = gl.createProgram();
     gl.attachShader(program, vertexShader);

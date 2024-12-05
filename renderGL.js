@@ -1,3 +1,6 @@
+//renderGL.js
+import { placeObj } from './levelBuilderGL.js';
+
 export function renderScene(gl, program, locations, worldObjects, camera, projection, light) {
     // Set up WebGL state
     gl.clearColor(0.1, 0.1, 0.1, 1.0); // Background color
@@ -22,25 +25,6 @@ export function renderScene(gl, program, locations, worldObjects, camera, projec
     // Render each object
     for (const [name, object] of Object.entries(worldObjects)) {
         if (!object) continue;
-
-        // Set up model matrix for the object
-        const modelMatrix = mat4.create();
-        mat4.scale(modelMatrix, modelMatrix, [1, -1, 1]); // Flip on the Y-axis
-        mat4.translate(modelMatrix, modelMatrix, [0, 0, 0]); // Example transformation
-        gl.uniformMatrix4fv(locations.uniforms.modelMatrix, false, modelMatrix);
-
-        // Bind vertex buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
-        gl.enableVertexAttribArray(locations.attributes.position);
-        gl.vertexAttribPointer(locations.attributes.position, 3, gl.FLOAT, false, 0, 0);
-
-        // Bind normal buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, object.normalBuffer);
-        gl.enableVertexAttribArray(locations.attributes.normal);
-        gl.vertexAttribPointer(locations.attributes.normal, 3, gl.FLOAT, false, 0, 0);
-
-        // Bind index buffer and draw
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer);
-        gl.drawElements(gl.TRIANGLES, object.vertexCount, gl.UNSIGNED_SHORT, 0);
+        placeObj(gl, object, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     }
 }
