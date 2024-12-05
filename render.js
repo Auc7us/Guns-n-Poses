@@ -13,33 +13,6 @@ export function renderScene(canvas, fovSlider, base, grid, cube, bullets, gun, e
         return;
     }
 
-    // if (ego.z < 0) {
-    //     groundY = getHeightAtPosition(ego.x, ego.z, ego.y+1900, absGround);
-
-    //     if (isNaN(groundY)) {
-    //     } else {
-    //         ego.y = groundY - 1900;
-    //     }
-    // }
-
-    // // console.warn(`groundY: ${groundY}`) 
-    // if (groundY - (ego.y + 1900) > 0) {
-    //     ego.onGround = false;
-    //     console.log(`Player above ground : ${groundY - (ego.y + 1900)} mm`);
-    // } 
-    
-    // else if (groundY - (ego.y + 1900) <= 0) {
-    //     ego.onGround = true;
-    // } 
-
-
-    // if (ego.velocityY >= 0) {
-    //     // console.log("might be in free fall");
-    //     ego.isJumping = false;
-    //     ego.isFreeFalling = true;
-    //     // console.log(`onGround: ${ego.onGround}`);
-    // }
-
     groundPolygons.length = 0;
 
     context.clearRect(0, 0, canvas.width, canvas.height);

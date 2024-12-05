@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="A WebGL FPS game with interactive controls and customizable settings.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guns N' Poses - WebGL Edition</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            margin: 0;
+            padding: 0;
+        }
+        #canvas {
+            border: 3px solid #000;
+        }
+        .controls {
+            margin-left: 30px;
+            margin-top: 30px;
+            font-size: 18px; 
+        }
+        .controls h1 {
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="1600" height="900"></canvas>
+    <div class="controls">
+        <label for="slider1">Mouse Sensitivity:</label>
+        <input id="slider1" type="range" min="1" max="10" />
+        
+        <label for="fovSlider">Field of View:</label>
+        <input id="fovSlider" type="range" min="55" max="95" step="1" value="65">
+        <p>FOV: <span id="fovValue">65</span>°</p>
+
+        <h1>Game Controls</h1>
+        <ul>
+            <li><strong>W</strong>: Walk Forward</li>
+            <li><strong>S</strong>: Walk Backward</li>
+            <li><strong>A</strong>: Move Left</li>
+            <li><strong>D</strong>: Move Right</li>
+            <li><strong>Shift</strong>: Sprint</li>
+            <li><strong>C</strong>: Crouch</li>
+            <li><strong>Space</strong>: Jump</li>
+            <li><strong>Left Mouse Button</strong>: Shoot</li>
+            <li><strong>Right Mouse Button</strong>: Charged Shot</li>
+            <li><strong>V</strong>: Display Path</li>
+        </ul>
+        <p><strong>Instructions:</strong> Click on the game to take pointer control. Press <strong>Esc</strong> to exit pointer control.</p>
+    </div>
+
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+
+        uniform mat4 uModelMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uProjectionMatrix;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+
+        void main() {
+            vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
+            vPosition = worldPosition.xyz;
+            vNormal = mat3(uModelMatrix) * aNormal;
+            gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+        }
+    </script>
+
+    <!-- Fragment Shader -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+
+        uniform vec3 uLightDirection;
+        uniform vec3 uLightColor;
+        uniform vec3 uObjectColor;
+
+        void main() {
+            vec3 normalizedNormal = normalize(vNormal);
+            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.0);
+            vec3 color = uObjectColor * (uLightColor * diffuse);
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <!-- JavaScript Modules -->
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', function() {
+            const fovSlider = document.getElementById('fovSlider');
+            const fovValueDisplay = document.getElementById('fovValue');
+            
+            // Set the initial FOV value
+            fovValueDisplay.textContent = fovSlider.value;
+
+            // Update FOV value when slider is moved
+            fovSlider.addEventListener('input', function() {
+                fovValueDisplay.textContent = this.value;
+            });
+        });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+
+    <script type="module" src="mainGL.js"></script>
+
+
+</body>
+</html>

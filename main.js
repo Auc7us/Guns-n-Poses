@@ -6,11 +6,15 @@ import { updateMovement, shoot, initiateJump, createPlayerHitbox, resetMovement,
 
 async function world() {
     "use strict";
-    const canvas = document.getElementById('canvas');    
+    const canvas = document.getElementById('canvas');
     if (!canvas) {
         console.error('Canvas element not found!');
         return;
     }
+    // const gl = canvas.getContext('webgl');    
+    // if (!gl) {
+    //     console.error('WebGL not supported');
+    // }
 
     var slider1 = document.getElementById('slider1');
     var fovSlider = document.getElementById('fovSlider');
