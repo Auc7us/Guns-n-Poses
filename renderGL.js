@@ -23,6 +23,11 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     gl.uniformMatrix4fv(locations.uniforms.projectionMatrix, false, projectionMatrix);
 
     const light = {
+        direction: vec3.normalize([], [1, -1, -1]),
+        color: [1, 1, 1],
+    };
+
+    const light2 = {
         
         direction: vec3.create(),
         color: [1, 1, 1],
@@ -32,7 +37,7 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     const y = Math.cos(lightTime);
     const z = Math.sin(lightTime * 0.5); // Varying slower for a dynamic effect
     // Update light direction and normalize
-    vec3.normalize(light.direction, [x, y, z]);
+    vec3.normalize(light2.direction, [x, y, z]);
     
 
     // Set light uniforms for program1
@@ -47,6 +52,7 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     placeObj(gl, worldObjects.cube, [18000, 0, -53000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
 
     // Track and platform rendering
+    gl.uniform3fv(locations.uniforms.objectColor, [0.7, 0.7, 0.7]);
     placeObj(gl, worldObjects.lRail, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     placeObj(gl, worldObjects.rRail, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
 
@@ -59,18 +65,27 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.25, 0.01]);
     placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
 
-    gl.uniform3fv(locations.uniforms.objectColor, [0.3, 0.3, 0.3]);
+    gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.5, 0.5]);
     // Render ground
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [-4000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    drawRepeatingObj(gl, worldObjects.surface, locations, -38000, -56000, 1000, [18000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+
+    // Render stairs
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    placeObj(gl, worldObjects.surface, [4000, 0, -3000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 1000, -3000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    placeObj(gl, worldObjects.surface, [4000, 1000, -6000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 2000, -6000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    placeObj(gl, worldObjects.surface, [4000, 2000, -9000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 3000, -9000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    placeObj(gl, worldObjects.surface, [4000, 3000, -12000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 4000, -12000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
+    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -4999, 1000, [4000, 0, -15000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
 
     // Program 2 Setup for specular rendering
     gl.useProgram(program2);
     const locations2 = getLocations(gl, program2);
-    
-    const light2 = {
-        direction: vec3.normalize([], [1, -1, -1]),
-        color: [1, 1, 1],
-    };
 
     // Set uniform matrices for program2
     gl.uniformMatrix4fv(locations2.uniforms.viewMatrix, false, viewMatrix);
