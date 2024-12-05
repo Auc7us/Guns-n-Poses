@@ -6,6 +6,10 @@ import { updateMovement, initiateJump } from './mechanicsGL.js';
 async function main() {
     const canvas = document.getElementById('canvas');
     const gl = canvas.getContext('webgl');
+    const gravity = -9800;
+    const jumpHeight = 5000;
+    const absGround = -2000;
+    const groundY = 0;
 
     if (!gl) {
         console.error('WebGL not supported!');
@@ -38,8 +42,8 @@ async function main() {
     const worldObjects = await loadWorldObjects(gl);
 
     const camera = {
-        position: vec3.fromValues(2000, 2000, 5000),
-        target: vec3.fromValues(2000, 2000, 0),
+        position: vec3.fromValues(2000, 1900, 5000),
+        target: vec3.fromValues(2000, 700, 0),
         up: vec3.fromValues(0, 1, 0),
     };
 
@@ -83,7 +87,7 @@ async function main() {
     document.addEventListener('keydown', (event) => {
         keysPressed[event.key.toLowerCase()] = true;
         if (event.key === ' ') {
-            initiateJump(ego, 5000, -9800);
+            initiateJump(ego, jumpHeight, gravity);
         }
     });
 
@@ -124,8 +128,7 @@ async function main() {
     }
 
     function renderLoop() {
-        updateMovement(ego, keysPressed, yawPitch.yaw, yawPitch.pitch, speed, deltaTime, 2000, 5000);
-
+        updateMovement(ego, gravity, keysPressed, yawPitch.yaw, yawPitch.pitch, speed, deltaTime, groundY, absGround);
         camera.position[0] = ego.x;
         camera.position[1] = ego.y;
         camera.position[2] = ego.z;

@@ -1,4 +1,4 @@
-export function updateMovement(ego, keysPressed, yaw, pitch, speed, deltaTime, groundY, absGround) {
+export function updateMovement(ego, gravity, keysPressed, yaw, pitch, speed, deltaTime, groundY, absGround) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
     // Calculate forward (W/S) and strafe (A/D) directions
@@ -29,13 +29,16 @@ export function updateMovement(ego, keysPressed, yaw, pitch, speed, deltaTime, g
         ego.z -= strafeVector.z * pace;
     }
 
+    const playerFeetY = ego.y - 1900;
+
     // Ground collision detection
     if (ego.z < 0) {
-        groundY = getHeightAtPosition(ego.x, ego.z, ego.y + 1900, absGround);
+        groundY = getHeightAtPosition(ego.x, ego.z, playerFeetY, absGround);
+        groundY = 0;
 
-        if (!isNaN(groundY) && ego.y + 1900 > groundY) {
+        if (!isNaN(groundY) && playerFeetY < groundY) {
             // Land on the ground
-            ego.y = groundY - 1900;
+            ego.y = groundY + 1900; // snap him to ground
             ego.velocityY = 0; // Reset velocity
             ego.isJumping = false;
             ego.isFreeFalling = false;
@@ -44,7 +47,7 @@ export function updateMovement(ego, keysPressed, yaw, pitch, speed, deltaTime, g
     }
 
     // Check if player is above ground
-    if (groundY - (ego.y + 1900) > 0) {
+    if ( playerFeetY > groundY) {
         ego.onGround = false;
         if (!ego.isJumping) ego.isFreeFalling = true;
     } else {
@@ -54,9 +57,9 @@ export function updateMovement(ego, keysPressed, yaw, pitch, speed, deltaTime, g
 
     // Handle vertical movement (jump or free fall)
     if (ego.isJumping) {
-        jump(ego, -9800, deltaTime); // Gravity is negative
+        jump(ego, gravity, deltaTime); // Gravity is negative
     } else if (ego.isFreeFalling) {
-        freeFall(ego, -9800, groundY, deltaTime);
+        freeFall(ego, gravity, groundY, deltaTime);
     }
 }
 
@@ -69,10 +72,9 @@ export function initiateJump(ego, jumpHeight, gravity) {
 
 export function jump(ego, gravity, deltaTime) {
     if (!ego.isFreeFalling) {
-        ego.velocityY += gravity * deltaTime; // Gravity reduces upward velocity
-        ego.y += ego.velocityY * deltaTime; // Move up or down based on velocity
+        ego.velocityY += gravity * deltaTime;
+        ego.y += ego.velocityY * deltaTime;
         if (ego.velocityY <= 0) {
-            // Transition to free fall when upward velocity stops
             ego.isJumping = false;
             ego.isFreeFalling = true;
         }
@@ -81,14 +83,14 @@ export function jump(ego, gravity, deltaTime) {
 
 export function freeFall(ego, gravity, groundY, deltaTime) {
     if (!ego.onGround) {
-        ego.velocityY += gravity * deltaTime; // Gravity accelerates downward velocity
-        ego.y += ego.velocityY * deltaTime; // Move down
+        ego.velocityY += gravity * deltaTime;
+        ego.y += ego.velocityY * deltaTime;
     } else {
-        // Stop falling when hitting the ground
-        ego.y = groundY - 1900;
+        ego.y = groundY + 1900;
         ego.velocityY = 0;
     }
 }
+
 
 export function getHeightAtPosition(x, z, playerFeetY, absGround) {
     // Placeholder function for ground height detection
