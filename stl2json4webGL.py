@@ -49,8 +49,8 @@ def save_to_json(data, output_file):
         json.dump(data, f, indent=4)
 
 # Example usage
-stl_file = '/home/flash/Documents/Guns-n-Poses/stl/gunR.stl'
-output_file = '/home/flash/Documents/Guns-n-Poses/objects/gunGL.json'
+stl_file = '/home/flash/Documents/Guns-n-Poses/stl/platorm44.stl'
+output_file = '/home/flash/Documents/Guns-n-Poses/objects/platformGL.json'
 
 data = parse_binary_stl(stl_file)
 save_to_json(data, output_file)

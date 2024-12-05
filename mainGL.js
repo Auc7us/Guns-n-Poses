@@ -10,7 +10,7 @@ async function main() {
     const gl = canvas.getContext('webgl');
     const gravity = -9800;
     const jumpHeight = 5000;
-    const absGround = -4000;
+    const absGround = 0 //-4000;
     const groundY = 0;
 
     if (!gl) {
@@ -63,7 +63,7 @@ async function main() {
         fov: (65 * Math.PI) / 180, // Default FOV (in radians)
         aspect: canvas.width / canvas.height,
         near: 0.1,
-        far: 50000,
+        far: 70000,
     };
 
     const light = {

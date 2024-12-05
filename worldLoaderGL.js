@@ -38,13 +38,19 @@ export async function loadWorldObjects(gl) {
     const cube = await loadModel(gl, './objects/cubeGL.json');
     const gun = await loadModel(gl, './objects/gunGL.json');
     const surface = await loadModel(gl, './objects/surfaceGL.json');
-    // Add more objects as needed
-    // const platform = await loadModel(gl, './objects/platformGL.json');
+    const bullet = await loadModel(gl, './objects/bulletGL.json');
+    const lRail = await loadModel(gl, './objects/lRailGL.json');
+    const rRail = await loadModel(gl, './objects/rRailGL.json');
+    const platform = await loadModel(gl, './objects/platformGL.json');
 
     return {
         cube,
         surface,
         gun,
-        // platform,
+        platform,
+        rRail,
+        lRail,
+        bullet
+
     };
 }

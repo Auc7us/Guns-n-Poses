@@ -30,3 +30,9 @@ export function placeObj(gl, obj, translation, rotation, scale, locations, isGro
         groundPolygons.push({ vertices: obj.vertices, boundingBox });
     }
 }
+
+export function drawRepeatingObj(gl, obj, locations, startZ, endZ, repeatInterval, translation, rotation, scale) {
+    for (let z = startZ; z >= endZ; z -= repeatInterval) {
+        placeObj(gl, obj, [translation[0], translation[1], translation[2] + z], rotation, scale, locations, 0);
+    }
+}
