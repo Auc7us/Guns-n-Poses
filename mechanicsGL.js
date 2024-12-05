@@ -1,6 +1,6 @@
 //mechanicsGL.js
 
-export function updateMovement(ego, gravity, keysPressed, yaw, pitch, speed, deltaTime, groundY, absGround) {
+export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
     // Calculate forward (W/S) and strafe (A/D) directions

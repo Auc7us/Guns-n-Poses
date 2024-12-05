@@ -14,7 +14,7 @@ async function main() {
     const groundY = 0;
     const speed = 90;
     const deltaTime = 0.016; // ~60 FPS
-    let lighttime = 0;
+    let loopTime = 0;
 
     if (!gl) {
         console.error('WebGL not supported!');
@@ -23,31 +23,18 @@ async function main() {
 
     const worldObjects = await loadWorldObjects(gl);
     const railPath = await getRailPath();
-    const vertexShaderSource1 = document.getElementById('vertex-shader1').text;
-    const vertexShaderSource2 = document.getElementById('vertex-shader2').text;
-    const fragmentShaderSource1 = document.getElementById('fragment-shader1').text;
-    const fragmentShaderSource2 = document.getElementById('fragment-shader2').text;
-    // const fragmentShaderSource3 = document.getElementById('fragment-shader3').text;
-    // const fragmentShaderSource4 = document.getElementById('fragment-shader4').text;
+    const vertexShaderSrc = document.getElementById(    'vertex-shader').text;
+    const fragmentRegSrc  = document.getElementById( 'fragment-regular').text;
+    const fragmentBPDSrc  = document.getElementById( 'fragment-bpd').text;
+    const fragmentSpecSrc = document.getElementById('fragment-specular').text;
 
-    const vertexShader1 = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource1);
-    const vertexShader2 = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource2);
-    const fragmentShader1 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource1);
-    const fragmentShader2 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource2);
-    // const fragmentShader3 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource3);
-    // const fragmentShader4 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource4);
+    const vertexShader = createShader(gl,   gl.VERTEX_SHADER, vertexShaderSrc);
+    const fSRegular    = createShader(gl, gl.FRAGMENT_SHADER, fragmentRegSrc);
+    const fSBPD        = createShader(gl, gl.FRAGMENT_SHADER, fragmentBPDSrc);
+    const fSSpecular   = createShader(gl, gl.FRAGMENT_SHADER, fragmentSpecSrc);
     
-    const program1 = createProgram(gl, vertexShader1, fragmentShader1);
-    const program2 = createProgram(gl, vertexShader2, fragmentShader2);
-    // const program3 = createProgram(gl, vertexShader1, fragmentShader3);
-    // const program4 = createProgram(gl, vertexShader1, fragmentShader4);
-
-    // const programsWithLocations = {
-    //     program1: getLocations(gl, program1),
-    //     program2: getLocations(gl, program2),
-    //     program3: getLocations(gl, program3),
-    //     program4: getLocations(gl, program4)
-    // };
+    const program1 = createProgram(gl, vertexShader, fSBPD);
+    const program2 = createProgram(gl, vertexShader, fSSpecular);
 
     const camera = {
         position: vec3.fromValues(2000, 1900, 5000),
@@ -113,25 +100,21 @@ async function main() {
     });
 
     function updateCameraTarget() {
-        const forward = vec3.fromValues(
-            Math.sin(yawPitch.yaw),
-            -Math.sin(yawPitch.pitch),
-            -Math.cos(yawPitch.yaw)
-        );
+        const forward = vec3.fromValues(Math.sin(yawPitch.yaw), -Math.sin(yawPitch.pitch), -Math.cos(yawPitch.yaw));
         vec3.normalize(forward, forward);
         vec3.add(camera.target, [ego.x, ego.y, ego.z], forward);
     }
 
     function renderLoop() {
-        updateMovement(ego, gravity, keysPressed, yawPitch.yaw, yawPitch.pitch, speed, deltaTime, groundY, absGround);
+        updateMovement(ego, gravity, keysPressed, yawPitch.yaw, speed, deltaTime, groundY, absGround);
         camera.position[0] = ego.x;
         camera.position[1] = ego.y;
         camera.position[2] = ego.z;
 
-        lighttime += deltaTime;
+        loopTime += deltaTime;
         updateCameraTarget(); // Ensure the target updates on movement
 
-        renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, lighttime);
+        renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, loopTime);
         requestAnimationFrame(renderLoop);
     }
 

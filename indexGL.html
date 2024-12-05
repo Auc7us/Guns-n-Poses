@@ -52,7 +52,7 @@
     </div>
 
     <!-- Vertex Shader -->
-    <script id="vertex-shader1" type="x-shader/x-vertex">
+    <script id="vertex-shader" type="x-shader/x-vertex">
         attribute vec3 aPosition;
         attribute vec3 aNormal;
 
@@ -69,38 +69,10 @@
             vNormal = mat3(uModelMatrix) * aNormal;
             gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
         }
-    </script>
-
-    <script id="vertex-shader2" type="x-shader/x-vertex">
-        precision highp float;
-    
-        attribute vec3 aPosition;
-        attribute vec3 aNormal;
-    
-        uniform mat3 normalMatrix;
-        uniform mat4 uModelMatrix;
-        uniform mat4 uViewMatrix;
-        uniform mat4 uProjectionMatrix;
-    
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-    
-        void main() {
-            // Calculate the transformed normal
-            vNormal = mat3(uModelMatrix) * aNormal;
-    
-            // Calculate the world position
-            vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
-            vPosition = worldPosition.xyz;
-    
-            // Transform to clip space
-            gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
-        }
-    </script>
-    
+    </script>   
 
     <!-- Fragment Shader1 -->
-    <script id="fragment-shader1" type="x-shader/x-fragment">
+    <script id="fragment-regular" type="x-shader/x-fragment">
         precision mediump float;
 
         varying vec3 vNormal;
@@ -118,7 +90,52 @@
         }
     </script>
 
-    <script id="fragment-shader2" type="x-shader/x-fragment">
+    <script id="fragment-bpd" type="x-shader/x-fragment">
+        precision mediump float;
+    
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+    
+        uniform vec3 uLightDirection;  // Direction of the light
+        uniform vec3 uLightColor;      // Color of the light
+        uniform vec3 uObjectColor;     // Color of the object
+    
+        const float ambientC = 0.1;   // Ambient coefficient
+        const float diffuseC = 0.9;    // Diffuse coefficient
+        const float specularC1 = 5.0;
+        const float specularE1 = 32.0;
+        const float specularE2 = 16.0;
+        const float specularC2 = 1.0;
+    
+        vec3 computeStaticLight(vec3 normal, vec3 position, vec3 lightDir, vec3 lightColor, vec3 objectColor) {
+            // Ambient lighting
+            vec3 ambient = ambientC * lightColor;
+    
+            // Diffuse lighting
+            vec3 norm = normalize(normal);
+            vec3 light = normalize(lightDir);
+            float diff = max(dot(norm, light), 0.0);
+            vec3 diffuse = diff * diffuseC * lightColor;
+    
+            // Specular lighting (Blinn-Phong with two components)
+            vec3 viewDir = normalize(-position); // Assuming the view position is at the origin
+            vec3 halfwayDir = normalize(light + viewDir);
+            float spec1 = pow(max(dot(norm, halfwayDir), 0.0), specularE1);
+            float spec2 = pow(max(dot(norm, halfwayDir), 0.0), specularE2);
+            vec3 specular = (specularC1 * spec1 + specularC2 * spec2) * lightColor;
+    
+            // Combine lighting
+            return ambient * objectColor + diffuse * objectColor + specular * 0.5;
+        }
+    
+        void main() {
+            vec3 staticLight = computeStaticLight(vNormal, vPosition, -uLightDirection, uLightColor, uObjectColor);
+            gl_FragColor = vec4(staticLight, 1.0);
+        }
+    </script>
+    
+
+    <script id="fragment-specular" type="x-shader/x-fragment">
         precision mediump float;
         
         varying vec3 vNormal;       // Interpolated normal
@@ -136,7 +153,7 @@
             vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
     
             // Ambient component
-            float ambientStrength = 0.2; // Ambient strength
+            float ambientStrength = 0.12; // Ambient strength
             vec3 ambient = ambientStrength * uLightColor;
     
             // Diffuse component
@@ -144,7 +161,7 @@
             vec3 diffuse = diffuseStrength * uLightColor;
     
             // Specular component
-            vec3 reflectDir = reflect(-lightDir, normalizedNormal); // Reflected light direction
+            vec3 reflectDir = reflect(lightDir, normalizedNormal); // Reflected light direction
             float shininess = 64.0; // Shininess factor
             float specularStrength = 10.0; // Boost specular intensity
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Corrected
@@ -154,91 +171,6 @@
             vec3 finalColor = (ambient + diffuse + specular) * uObjectColor;
     
             gl_FragColor = vec4(finalColor, 1.0);
-        }
-    </script>
-    
-
-    <!-- <script id="fragment-shader2" type="x-shader/x-fragment">
-        precision mediump float;
-    
-        varying vec3 vNormal;       // Interpolated normal
-        varying vec3 vPosition;     // Position in world space
-    
-        uniform vec3 uLightDirection;  // Light direction
-        uniform vec3 uLightColor;      // Light color
-        uniform vec3 uObjectColor;     // Object base color
-        uniform vec3 uViewPosition;    // Camera position (viewpoint)
-    
-        void main() {
-            // Normalize inputs
-            vec3 normalizedNormal = normalize(vNormal);
-            vec3 lightDir = normalize(-uLightDirection); // Light direction normalized
-            vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
-    
-            // Ambient component
-            float ambientStrength = 0.2; // Ambient strength
-            vec3 ambient = ambientStrength * uLightColor;
-    
-            // Diffuse component
-            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0); // Prevent negative diffuse
-            vec3 diffuse = diffuseStrength * uLightColor;
-    
-            // Specular component
-            vec3 reflectDir = reflect(-lightDir, normalizedNormal); // Reflected light direction
-            float shininess = 32.0; // Shininess factor
-            float specularStrength = 2.0; // Specular intensity
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Prevent negative specular
-            vec3 specular = specularStrength * spec * uLightColor;
-    
-            // Combine lighting components
-            vec3 finalColor = (ambient + diffuse + specular) * uObjectColor;
-    
-            // Debug Colors (optional)
-            vec3 debugColor = vec3(0.0); // Default black
-            debugColor += vec3(1.0, 0.50, 0.20) * ambient;  // Ambient = Red
-            debugColor += vec3(0.5, 0.5, 0.5) * diffuse;  // Diffuse = Green
-            debugColor += vec3(0.0, 0.0, 1.0) * specular; // Specular = Blue
-    
-            gl_FragColor = vec4(finalColor + debugColor, 1.0);
-        }
-    </script> -->
-    
-
-    <!-- Fragment Shader3 -->
-    <script id="fragment-shader3" type="x-shader/x-fragment">
-        precision mediump float;
-
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-
-        uniform vec3 uLightDirection;
-        uniform vec3 uLightColor;
-        uniform vec3 uObjectColor;
-
-        void main() {
-            vec3 normalizedNormal = normalize(vNormal);
-            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.12);
-            vec3 color = uObjectColor * (uLightColor * diffuse);
-            gl_FragColor = vec4(color, 1.0);
-        }
-    </script>
-
-    <!-- Fragment Shader4 -->
-    <script id="fragment-shader4" type="x-shader/x-fragment">
-        precision mediump float;
-
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-
-        uniform vec3 uLightDirection;
-        uniform vec3 uLightColor;
-        uniform vec3 uObjectColor;
-
-        void main() {
-            vec3 normalizedNormal = normalize(vNormal);
-            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.12);
-            vec3 color = uObjectColor * (uLightColor * diffuse);
-            gl_FragColor = vec4(color, 1.0);
         }
     </script>
 

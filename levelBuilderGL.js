@@ -5,9 +5,6 @@ export const groundPolygons = [];
 export function placeObj(gl, obj, translation, rotation, scale, locations, isGround = false) {
     
     const modelMatrix = mat4.create();
-    // modelMatrix = rotateObj(modelMatrix, rotation.angle, rotation.axis);
-    // modelMatrix = scaleObj(modelMatrix, scale.x, scale.y, scale.z);
-    // modelMatrix = translateObj(modelMatrix, translation.x, translation.y, translation.z);
 
     mat4.translate(modelMatrix, modelMatrix, translation); // World space position
     mat4.rotate(modelMatrix, modelMatrix, rotation.angle, rotation.axis);  // Rotate around object's local origin
