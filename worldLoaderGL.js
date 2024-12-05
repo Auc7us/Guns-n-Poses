@@ -1,6 +1,22 @@
 // worldLoader.js
 // Load WebGL-ready models and prepare buffers
 
+import { CurveSegment} from './utils.js';
+
+export async function loadVertices(obj) {
+    try {
+        const response = await fetch("objects/" + obj);
+        if (!response.ok) {
+            throw new Error("ERRRRRROOOOOR");
+        }
+        const vertices = await response.json(); 
+        return vertices;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
 export async function loadModel(gl, filePath) {
     try {
         const response = await fetch(filePath);
@@ -53,4 +69,12 @@ export async function loadWorldObjects(gl) {
         bullet
 
     };
+}
+
+export async function getRailPath() {
+    
+    const curveData = await loadVertices('platform_track.json');
+    const mainCurveSegments = curveData.mainCurveSegments.map(segment => new CurveSegment(segment.P0, segment.P1, segment.T0, segment.T1));
+    
+    return mainCurveSegments
 }

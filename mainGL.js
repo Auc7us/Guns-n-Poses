@@ -1,8 +1,8 @@
 // mainGL.js
 
-import { loadWorldObjects } from './worldLoaderGL.js';
+import { loadWorldObjects, getRailPath} from './worldLoaderGL.js';
 import { renderScene } from './renderGL.js';
-import { createShader, createProgram } from './utilsGL.js';
+import { createShader, createProgram, getLocations } from './utilsGL.js';
 import { updateMovement, initiateJump } from './mechanicsGL.js';
 
 async function main() {
@@ -12,36 +12,42 @@ async function main() {
     const jumpHeight = 5000;
     const absGround = 0 //-4000;
     const groundY = 0;
+    const speed = 90;
+    const deltaTime = 0.016; // ~60 FPS
 
     if (!gl) {
         console.error('WebGL not supported!');
         return;
     }
 
-    const vertexShaderSource = document.getElementById('vertex-shader').textContent;
-    const fragmentShaderSource = document.getElementById('fragment-shader').textContent;
+    const worldObjects = await loadWorldObjects(gl);
+    const railPath = await getRailPath();
+    const vertexShaderSource = document.getElementById('vertex-shader').text;
+    const fragmentShaderSource1 = document.getElementById('fragment-shader1').text;
+    const fragmentShaderSource2 = document.getElementById('fragment-shader2').text;
+    const fragmentShaderSource3 = document.getElementById('fragment-shader3').text;
+    const fragmentShaderSource4 = document.getElementById('fragment-shader4').text;
 
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    const program = createProgram(gl, vertexShader, fragmentShader);
-    gl.useProgram(program);
+    const fragmentShader1 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource1);
+    const fragmentShader2 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource2);
+    const fragmentShader3 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource3);
+    const fragmentShader4 = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource4);
+    
+    const program1 = createProgram(gl, vertexShader, fragmentShader1);
+    const program2 = createProgram(gl, vertexShader, fragmentShader2);
+    const program3 = createProgram(gl, vertexShader, fragmentShader3);
+    const program4 = createProgram(gl, vertexShader, fragmentShader4);
 
-    const locations = {
-        attributes: {
-            position: gl.getAttribLocation(program, 'aPosition'),
-            normal: gl.getAttribLocation(program, 'aNormal'),
-        },
-        uniforms: {
-            modelMatrix: gl.getUniformLocation(program, 'uModelMatrix'),
-            viewMatrix: gl.getUniformLocation(program, 'uViewMatrix'),
-            projectionMatrix: gl.getUniformLocation(program, 'uProjectionMatrix'),
-            lightDirection: gl.getUniformLocation(program, 'uLightDirection'),
-            lightColor: gl.getUniformLocation(program, 'uLightColor'),
-            objectColor: gl.getUniformLocation(program, 'uObjectColor'),
-        },
+    const programsWithLocations = {
+        program1: getLocations(gl, program1),
+        program2: getLocations(gl, program2),
+        program3: getLocations(gl, program3),
+        program4: getLocations(gl, program4)
     };
-
-    const worldObjects = await loadWorldObjects(gl);
+    
+    gl.useProgram(program1);
+    const locations = getLocations(gl, program1);
 
     const camera = {
         position: vec3.fromValues(2000, 1900, 5000),
@@ -64,11 +70,6 @@ async function main() {
         aspect: canvas.width / canvas.height,
         near: 0.1,
         far: 70000,
-    };
-
-    const light = {
-        direction: vec3.normalize([], [1, -1, -1]),
-        color: [1, 1, 1],
     };
 
     const keysPressed = {};
@@ -111,14 +112,6 @@ async function main() {
         canvas.requestPointerLock();
     });
 
-    // Set light and object color uniforms
-    gl.uniform3fv(locations.uniforms.lightDirection, light.direction);
-    gl.uniform3fv(locations.uniforms.lightColor, light.color);
-    gl.uniform3fv(locations.uniforms.objectColor, [0.8, 0.2, 0.2]);
-
-    const speed = 90;
-    const deltaTime = 0.016; // ~60 FPS
-
     function updateCameraTarget() {
         const forward = vec3.fromValues(
             Math.sin(yawPitch.yaw),
@@ -137,7 +130,7 @@ async function main() {
 
         updateCameraTarget(); // Ensure the target updates on movement
 
-        renderScene(gl, program, locations, worldObjects, camera, projection, light);
+        renderScene(gl, locations, worldObjects, camera, projection, railPath);
         requestAnimationFrame(renderLoop);
     }
 

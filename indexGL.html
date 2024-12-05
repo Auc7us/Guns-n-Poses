@@ -71,8 +71,65 @@
         }
     </script>
 
-    <!-- Fragment Shader -->
-    <script id="fragment-shader" type="x-shader/x-fragment">
+    <!-- Fragment Shader1 -->
+    <script id="fragment-shader1" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+
+        uniform vec3 uLightDirection;
+        uniform vec3 uLightColor;
+        uniform vec3 uObjectColor;
+
+        void main() {
+            vec3 normalizedNormal = normalize(vNormal);
+            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.15);
+            vec3 color = uObjectColor * (uLightColor * diffuse);
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader2 -->
+    <script id="fragment-shader2" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+
+        uniform vec3 uLightDirection;
+        uniform vec3 uLightColor;
+        uniform vec3 uObjectColor;
+
+        void main() {
+            vec3 normalizedNormal = normalize(vNormal);
+            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.12);
+            vec3 color = uObjectColor * (uLightColor * diffuse);
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader3 -->
+    <script id="fragment-shader3" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+
+        uniform vec3 uLightDirection;
+        uniform vec3 uLightColor;
+        uniform vec3 uObjectColor;
+
+        void main() {
+            vec3 normalizedNormal = normalize(vNormal);
+            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.12);
+            vec3 color = uObjectColor * (uLightColor * diffuse);
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader4 -->
+    <script id="fragment-shader4" type="x-shader/x-fragment">
         precision mediump float;
 
         varying vec3 vNormal;
