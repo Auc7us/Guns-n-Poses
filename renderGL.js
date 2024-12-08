@@ -35,9 +35,9 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     //Program 1 Objects ##########################################################################
     // Cubes gates
     gl.uniform3fv(locations.uniforms.objectColor, [0.9, 0.2, 0.1]);
-    placeObj(gl, worldObjects.cube, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.cubeGate, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     gl.uniform3fv(locations.uniforms.objectColor, [0, 0.9, 0.9]);
-    placeObj(gl, worldObjects.cube, [18000, 0, -53000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.cubeGate, [18000, 0, -53000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     // Track and Platform rendering
     gl.uniform3fv(locations.uniforms.objectColor, [0.7, 0.7, 0.7]);
     placeObj(gl, worldObjects.lRail, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
@@ -49,7 +49,7 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     const platformAngle = -Math.atan2(tangent.z, tangent.x);
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.25, 0.01]);
     // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
-    placeObj(gl, worldObjects.platform, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
+    placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
     // Render ground
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.5, 0.5]);
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
