@@ -40,7 +40,7 @@ def parse_binary_stl(file_path):
             # Add vertices and normals for each triangle
             for vertex in (v1, v2, v3):
                 vertices.extend([round(vertex[0], 4), round(-vertex[1], 4), round(vertex[2], 4)])
-                normals.extend([round(normal[0], 4), round(normal[1], 4), round(normal[2], 4)])
+                normals.extend([round(normal[0], 4), round(-normal[1], 4), round(normal[2], 4)])
 
             # Add triangle indices (3 indices per triangle)
             indices.extend([vertex_count, vertex_count + 1, vertex_count + 2])

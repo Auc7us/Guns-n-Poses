@@ -51,25 +51,24 @@ export async function loadModel(gl, filePath) {
 }
 
 export async function loadWorldObjects(gl) {
-    const cube = await loadModel(gl, './objects/cubeHP_flat.json');
-    const gun = await loadModel(gl, './objects/gunHP_flat.json');
-    const surface = await loadModel(gl, './objects/surfaceGL.json');
-    const bullet = await loadModel(gl, './objects/bullet_flat.json');
-    const lRail = await loadModel(gl, './objects/lRail_smooth.json');
-    const rRail = await loadModel(gl, './objects/rRail_smooth.json');
-    const platform = await loadModel(gl, './objects/platformC_flat.json');
-    const fMuzzle = await loadModel(gl, './objects/floatingMuzzle_flat.json');
+    const cubeGate = await loadModel(gl, './objects/cubeGate_flat.json');
+    const gun      = await loadModel(gl, './objects/gunHP_flat.json');
+    const surface  = await loadModel(gl, './objects/surface41_flat.json');
+    const bullet   = await loadModel(gl, './objects/bullet_flat.json');
+    const lRail    = await loadModel(gl, './objects/lRail_smooth.json');
+    const rRail    = await loadModel(gl, './objects/rRail_smooth.json');
+    const cube     = await loadModel(gl, './objects/cube_flat.json');
+    const fMuzzle  = await loadModel(gl, './objects/floatingMuzzle_flat.json');
 // 
     return {
-        cube,
-        surface,
+        cubeGate,
         gun,
-        platform,
-        rRail,
-        lRail,
+        surface,
         bullet,
+        lRail,
+        rRail,
+        cube,
         fMuzzle
-
     };
 }
 
