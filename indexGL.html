@@ -67,7 +67,7 @@
         void main() {
             vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
             vPosition = worldPosition.xyz;
-            vNormal = uNormalMatrix * normalize(aNormal);
+            vNormal =  normalize(uNormalMatrix * aNormal);
 
             gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
         }
@@ -87,8 +87,7 @@
 
         void main() {
             // Normalize inputs
-            vec3 normalizedNormal = normalize(vNormal);
-            vec3 lightDir = normalize(-uLightDirection); // Light direction normalized
+            vec3 lightDir = normalize(uLightDirection); // Light direction normalized
             vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
             
             // Ambient component
@@ -96,11 +95,11 @@
             vec3 ambient = ambientStrength * uLightColor;
 
             // Diffuse component (Lambertian)
-            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0); // Prevent negative diffuse
+            float diffuseStrength = max(dot(vNormal, -lightDir), 0.0); // Prevent negative diffuse
             vec3 diffuse = diffuseStrength * uLightColor;
 
             // Specular component (Phong)
-            vec3 reflectDir = reflect(lightDir, normalizedNormal); // Reflected light direction
+            vec3 reflectDir = reflect(lightDir, vNormal); // Reflected light direction
             float shininess = 100.0; // Shininess factor
             float specularStrength = 40.0; // Boost specular intensity
             float spec = 0.0;
@@ -110,15 +109,16 @@
             vec3 specular = specularStrength * spec * uLightColor;
 
             // Reflection component
-            vec3 reflectionDir = reflect(-viewDir, normalizedNormal); // Reflection vector
+            vec3 reflectionDir = reflect(viewDir, vNormal); // Reflection vector
             vec3 reflectionColor = vec3(0.8, 0.9, 1.0); // Example environment reflection color (sky-like)
-            float reflectionIntensity = pow(max(dot(viewDir, reflectDir), 0.0), 4.0); // Sharpness of reflection
+            float reflectionIntensity = pow(max(dot(viewDir, reflectionDir), 0.0), 4.0); // Sharpness of reflection
             vec3 reflection = reflectionStrength * reflectionIntensity * reflectionColor;
 
             // Combine lighting components
-            vec3 finalColor = (ambient + diffuse) * uObjectColor+ + specular * uLightColor + reflection;
+            vec3 finalColor = (ambient + diffuse) * uObjectColor + specular * uLightColor + reflection;
 
             gl_FragColor = vec4(finalColor, 1.0);
+            //gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
         }
     </script>
     
