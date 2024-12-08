@@ -7,12 +7,11 @@ export function placeObj(gl, obj, translation, rotation, scale, locations, isGro
     const modelMatrix = mat4.create();
 
     mat4.translate(modelMatrix, modelMatrix, translation); // World space position
-    mat4.rotate(modelMatrix, modelMatrix, rotation.angle, rotation.axis);  // Rotate around object's local origin
     mat4.scale(modelMatrix, modelMatrix, scale);  // Scale relative to its local axes
-
+    mat4.rotate(modelMatrix, modelMatrix, rotation.angle, rotation.axis);  // Rotate around object's local origin
+    
     const normalMatrix = mat3.create();
     mat3.normalFromMat4(normalMatrix, modelMatrix); // Compute the inverse transpose of the modelMatrix
-
     
     gl.uniformMatrix4fv(locations.uniforms.modelMatrix, false, modelMatrix);
     gl.uniformMatrix3fv(locations.uniforms.normalMatrix, false, normalMatrix);
