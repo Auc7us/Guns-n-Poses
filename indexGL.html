@@ -83,7 +83,7 @@
         uniform vec3 uObjectColor;     // Object base color
         uniform vec3 uViewPosition;    // Camera position (viewpoint)
 
-        const float reflectionStrength = 0.5; // Strength of reflection contribution
+        const float reflectionStrength = 0.2; // Strength of reflection contribution
 
         void main() {
             // Normalize inputs
@@ -92,7 +92,7 @@
             vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
             
             // Ambient component
-            float ambientStrength = 0.12; // Ambient strength
+            float ambientStrength = 0.01; // Ambient strength
             vec3 ambient = ambientStrength * uLightColor;
 
             // Diffuse component (Lambertian)
@@ -116,7 +116,7 @@
             vec3 reflection = reflectionStrength * reflectionIntensity * reflectionColor;
 
             // Combine lighting components
-            vec3 finalColor = (ambient + diffuse) * uObjectColor+ + specular * uLightColor + reflection * 0.4;
+            vec3 finalColor = (ambient + diffuse) * uObjectColor+ + specular * uLightColor + reflection;
 
             gl_FragColor = vec4(finalColor, 1.0);
         }

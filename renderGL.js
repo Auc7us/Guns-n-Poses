@@ -51,7 +51,8 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     const platZ = position.z;
     const platformAngle = -Math.atan2(tangent.z, tangent.x);
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.25, 0.01]);
-    placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
+    // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
+    placeObj(gl, worldObjects.platform, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
     // Render ground
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.5, 0.5]);
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
@@ -86,17 +87,28 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     gl.uniform3fv(locations2.uniforms.lightDirection, light2.direction);
     gl.uniform3fv(locations2.uniforms.lightColor, light2.color);
     // Render gun and bullet with specular effects
+    loopTime = loopTime*3
     const objectsToRenderWithProgram2 = [
-        { obj: worldObjects.gun, translation: [2000, 1600, 4350], color: [0.8, 0.7, 0.5], scale: [1, -1, 1]},
-        { obj: worldObjects.bullet, translation: [2115, 1770, 4000], color: [0.8, 0.8, 0.8], scale: [1, -1, 1]},
+        // { obj: worldObjects.gun, translation: [2000, 1600, 4350], color: [0.8, 0.7, 0.5], scale: [1, -1, 1]},
+        { obj: worldObjects.gun,     translation: [2120, 1770, 4550], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:             loopTime, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:     loopTime+Math.PI, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:   loopTime+Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:   loopTime+Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+3*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+5*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+3*Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+7*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
+        { obj: worldObjects.bullet,  translation: [2115, 1770, 4000], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.8, 0.8, 0.8]},
     ];
-    objectsToRenderWithProgram2.forEach(({ obj, translation, color, scale}) => {
+    
+    objectsToRenderWithProgram2.forEach(({ obj, translation, rotation, scale, color}) => {
         const modelMatrix = mat4.create();
         mat4.translate(modelMatrix, modelMatrix, translation);
         const normalMatrix = mat3.create();
         mat3.normalFromMat4(normalMatrix, modelMatrix);
         gl.uniformMatrix3fv(locations2.uniforms.normalMatrix, false, normalMatrix);
         gl.uniform3fv(locations2.uniforms.objectColor, color);    
-        placeObj(gl, obj, translation, { angle: 0, axis: [0, 1, 0] }, scale, locations2, 0);
+        placeObj(gl, obj, translation, rotation, scale, locations2, 0);
     });
 }

@@ -51,14 +51,15 @@ export async function loadModel(gl, filePath) {
 }
 
 export async function loadWorldObjects(gl) {
-    const cube = await loadModel(gl, './objects/cubeHPGL.json');
-    const gun = await loadModel(gl, './objects/gunGL.json');
+    const cube = await loadModel(gl, './objects/cubeHP_flat.json');
+    const gun = await loadModel(gl, './objects/gunHP_flat.json');
     const surface = await loadModel(gl, './objects/surfaceGL.json');
-    const bullet = await loadModel(gl, './objects/bulletGL.json');
-    const lRail = await loadModel(gl, './objects/lRailGL.json');
-    const rRail = await loadModel(gl, './objects/rRailGL.json');
-    const platform = await loadModel(gl, './objects/platformGL.json');
-
+    const bullet = await loadModel(gl, './objects/bullet_flat.json');
+    const lRail = await loadModel(gl, './objects/lRail_smooth.json');
+    const rRail = await loadModel(gl, './objects/rRail_smooth.json');
+    const platform = await loadModel(gl, './objects/platformC_flat.json');
+    const fMuzzle = await loadModel(gl, './objects/floatingMuzzle_flat.json');
+// 
     return {
         cube,
         surface,
@@ -66,7 +67,8 @@ export async function loadWorldObjects(gl) {
         platform,
         rRail,
         lRail,
-        bullet
+        bullet,
+        fMuzzle
 
     };
 }

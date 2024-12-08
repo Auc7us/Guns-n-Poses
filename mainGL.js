@@ -33,7 +33,7 @@ async function main() {
     
     // const program1 = createProgram(gl, vertexShader, fSBPD);
     const program1 = createProgram(gl, vertexShader, fSBPD);
-    const program2 = createProgram(gl, vertexShader, fSSpecular);
+    const program2 = createProgram(gl, vertexShader, fSBPD);
 
     const camera = {
         position: vec3.fromValues(2000, 1900, 5000),
