@@ -24,15 +24,14 @@ async function main() {
     const worldObjects = await loadWorldObjects(gl);
     const railPath = await getRailPath();
     const vertexShaderSrc = document.getElementById(    'vertex-shader').text;
-    const fragmentRegSrc  = document.getElementById( 'fragment-regular').text;
     const fragmentBPDSrc  = document.getElementById( 'fragment-bpd').text;
     const fragmentSpecSrc = document.getElementById('fragment-specular').text;
 
     const vertexShader = createShader(gl,   gl.VERTEX_SHADER, vertexShaderSrc);
-    const fSRegular    = createShader(gl, gl.FRAGMENT_SHADER, fragmentRegSrc);
     const fSBPD        = createShader(gl, gl.FRAGMENT_SHADER, fragmentBPDSrc);
     const fSSpecular   = createShader(gl, gl.FRAGMENT_SHADER, fragmentSpecSrc);
     
+    // const program1 = createProgram(gl, vertexShader, fSBPD);
     const program1 = createProgram(gl, vertexShader, fSBPD);
     const program2 = createProgram(gl, vertexShader, fSSpecular);
 

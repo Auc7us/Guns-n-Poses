@@ -59,6 +59,7 @@
         uniform mat4 uModelMatrix;
         uniform mat4 uViewMatrix;
         uniform mat4 uProjectionMatrix;
+        uniform mat3 uNormalMatrix;
 
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -66,71 +67,58 @@
         void main() {
             vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
             vPosition = worldPosition.xyz;
-            vNormal = mat3(uModelMatrix) * aNormal;
+            vNormal = uNormalMatrix * normalize(aNormal);
+
             gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
-        }
-    </script>   
-
-    <!-- Fragment Shader1 -->
-    <script id="fragment-regular" type="x-shader/x-fragment">
-        precision mediump float;
-
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-
-        uniform vec3 uLightDirection;
-        uniform vec3 uLightColor;
-        uniform vec3 uObjectColor;
-
-        void main() {
-            vec3 normalizedNormal = normalize(vNormal);
-            float diffuse = max(dot(normalizedNormal, -uLightDirection), 0.15);
-            vec3 color = uObjectColor * (uLightColor * diffuse);
-            gl_FragColor = vec4(color, 1.0);
         }
     </script>
 
     <script id="fragment-bpd" type="x-shader/x-fragment">
         precision mediump float;
-    
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-    
-        uniform vec3 uLightDirection;  // Direction of the light
-        uniform vec3 uLightColor;      // Color of the light
-        uniform vec3 uObjectColor;     // Color of the object
-    
-        const float ambientC = 0.1;   // Ambient coefficient
-        const float diffuseC = 0.9;    // Diffuse coefficient
-        const float specularC1 = 5.0;
-        const float specularE1 = 32.0;
-        const float specularE2 = 16.0;
-        const float specularC2 = 1.0;
-    
-        vec3 computeStaticLight(vec3 normal, vec3 position, vec3 lightDir, vec3 lightColor, vec3 objectColor) {
-            // Ambient lighting
-            vec3 ambient = ambientC * lightColor;
-    
-            // Diffuse lighting
-            vec3 norm = normalize(normal);
-            vec3 light = normalize(lightDir);
-            float diff = max(dot(norm, light), 0.0);
-            vec3 diffuse = diff * diffuseC * lightColor;
-    
-            // Specular lighting (Blinn-Phong with two components)
-            vec3 viewDir = normalize(-position); // Assuming the view position is at the origin
-            vec3 halfwayDir = normalize(light + viewDir);
-            float spec1 = pow(max(dot(norm, halfwayDir), 0.0), specularE1);
-            float spec2 = pow(max(dot(norm, halfwayDir), 0.0), specularE2);
-            vec3 specular = (specularC1 * spec1 + specularC2 * spec2) * lightColor;
-    
-            // Combine lighting
-            return ambient * objectColor + diffuse * objectColor + specular * 0.5;
-        }
-    
+        varying vec3 vNormal;       // Interpolated normal
+        varying vec3 vPosition;     // Position in world space
+
+        uniform vec3 uLightDirection;  // Light direction
+        uniform vec3 uLightColor;      // Light color
+        uniform vec3 uObjectColor;     // Object base color
+        uniform vec3 uViewPosition;    // Camera position (viewpoint)
+
+        const float reflectionStrength = 0.5; // Strength of reflection contribution
+
         void main() {
-            vec3 staticLight = computeStaticLight(vNormal, vPosition, -uLightDirection, uLightColor, uObjectColor);
-            gl_FragColor = vec4(staticLight, 1.0);
+            // Normalize inputs
+            vec3 normalizedNormal = normalize(vNormal);
+            vec3 lightDir = normalize(-uLightDirection); // Light direction normalized
+            vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
+            
+            // Ambient component
+            float ambientStrength = 0.12; // Ambient strength
+            vec3 ambient = ambientStrength * uLightColor;
+
+            // Diffuse component (Lambertian)
+            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0); // Prevent negative diffuse
+            vec3 diffuse = diffuseStrength * uLightColor;
+
+            // Specular component (Phong)
+            vec3 reflectDir = reflect(lightDir, normalizedNormal); // Reflected light direction
+            float shininess = 100.0; // Shininess factor
+            float specularStrength = 40.0; // Boost specular intensity
+            float spec = 0.0;
+            if (diffuseStrength > 0.0) {
+                spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Specular term
+            }
+            vec3 specular = specularStrength * spec * uLightColor;
+
+            // Reflection component
+            vec3 reflectionDir = reflect(-viewDir, normalizedNormal); // Reflection vector
+            vec3 reflectionColor = vec3(0.8, 0.9, 1.0); // Example environment reflection color (sky-like)
+            float reflectionIntensity = pow(max(dot(viewDir, reflectDir), 0.0), 4.0); // Sharpness of reflection
+            vec3 reflection = reflectionStrength * reflectionIntensity * reflectionColor;
+
+            // Combine lighting components
+            vec3 finalColor = (ambient + diffuse) * uObjectColor+ + specular * uLightColor + reflection * 0.4;
+
+            gl_FragColor = vec4(finalColor, 1.0);
         }
     </script>
     
@@ -151,7 +139,7 @@
             vec3 normalizedNormal = normalize(vNormal);
             vec3 lightDir = normalize(-uLightDirection); // Light direction normalized
             vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
-    
+            
             // Ambient component
             float ambientStrength = 0.12; // Ambient strength
             vec3 ambient = ambientStrength * uLightColor;
@@ -162,15 +150,22 @@
     
             // Specular component
             vec3 reflectDir = reflect(lightDir, normalizedNormal); // Reflected light direction
-            float shininess = 64.0; // Shininess factor
-            float specularStrength = 10.0; // Boost specular intensity
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Corrected
+            float shininess = 100.0; // Shininess factor
+            float specularStrength = 6.0; // Boost specular intensity
+            float spec = 0.0;
+            if (diffuseStrength > 0.0) {
+                spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Specular term
+            }
             vec3 specular = specularStrength * spec * uLightColor;
     
             // Combine lighting components
             vec3 finalColor = (ambient + diffuse + specular) * uObjectColor;
     
             gl_FragColor = vec4(finalColor, 1.0);
+            //gl_FragColor = vec4(normalizedNormal * 0.5 + 0.5, 1.0); // Debug line
+            //gl_FragColor = vec4(vPosition * 0.5 + 0.5, 1.0);
+            //gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
+
         }
     </script>
 

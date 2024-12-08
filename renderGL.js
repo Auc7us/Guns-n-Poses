@@ -4,6 +4,7 @@ import { getLocations } from './utilsGL.js';
 
 export function renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, loopTime) {
     // Set up WebGL state
+    // gl.clearColor(0.53*Math.cos(loopTime)*Math.cos(loopTime), 0.81*Math.cos(loopTime)*Math.cos(loopTime), 0.92* Math.cos(loopTime)*Math.cos(loopTime), 1.0); // Background color
     gl.clearColor(0, 0, 0, 1.0); // Background color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -20,10 +21,20 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     // Set uniform matrices for program1
     gl.uniformMatrix4fv(locations.uniforms.viewMatrix, false, viewMatrix);
     gl.uniformMatrix4fv(locations.uniforms.projectionMatrix, false, projectionMatrix);
-    // Set light for program1
-    const light = {direction: vec3.normalize([], [0, -1, -1]), color: [1, 1, 1]};
+    // const light = {direction: vec3.normalize([], [1, 2, -2]), color: [1, 1, 1]};
+    const light = {direction: vec3.create(), color: [1, 1, 1]};
+    // loopTime = -3.14/2;
+    const loopTimeEnv = loopTime * 0.1;
+    // vec3.normalize(light.direction, [0.1 * Math.sin(loopTimeEnv)*Math.sin(loopTimeEnv), 1*Math.cos(loopTimeEnv)*Math.cos(loopTimeEnv), -0.2*Math.sin(loopTimeEnv)*Math.sin(loopTimeEnv)]);
+    vec3.normalize(light.direction, [0.1 , 1, -0.8]);
+    /*LIGHT DIRECTION REMEMBERRR
+    X Positive = Left to Right (light is on left)
+    Y Positive = Top to bottom (light is on top)
+    Z Negative = Front to back (light is behind you at the start)
+    */
     gl.uniform3fv(locations.uniforms.lightDirection, light.direction);
     gl.uniform3fv(locations.uniforms.lightColor, light.color);
+    gl.uniform3fv(locations.uniforms.viewPosition, camera.position);
     //Program 1 Objects ##########################################################################
     // Cubes gates
     gl.uniform3fv(locations.uniforms.objectColor, [0.9, 0.2, 0.1]);
@@ -50,10 +61,10 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -3999, 1000, [4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
     // Render stairs
     gl.uniform3fv(locations.uniforms.objectColor, [0.4, 0.4, 0.4]);
-    placeObj(gl, worldObjects.surface, [4000,    0,  -4000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 1000,  -7000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 2000, -10000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 3000, -13000], { angle: Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.surface, [4000, 1000,  -4000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.surface, [4000, 2000,  -7000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.surface, [4000, 3000, -10000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.surface, [4000, 4000, -13000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 1000,  -4000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
     drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
@@ -66,25 +77,26 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     // Set uniform matrices for program2
     gl.uniformMatrix4fv(locations2.uniforms.viewMatrix, false, viewMatrix);
     gl.uniformMatrix4fv(locations2.uniforms.projectionMatrix, false, projectionMatrix);
-    gl.uniform3fv(locations2.uniforms.viewPosition, camera.position);
+    // console.log("Camera position:", camera.position);
+    // gl.uniform3fv(locations2.uniforms.viewPosition, camera.position);
     // Set light for program2
     const light2 = {direction: vec3.create(), color: [1, 1, 1]};
-    // Update light direction and normalize
-    vec3.normalize(light2.direction, [Math.sin(loopTime), Math.cos(loopTime), Math.sin(loopTime * 0.5)]);
+    
+    vec3.normalize(light2.direction, [Math.sin(loopTime), Math.cos(loopTime), Math.sin(loopTime)]);
     gl.uniform3fv(locations2.uniforms.lightDirection, light2.direction);
     gl.uniform3fv(locations2.uniforms.lightColor, light2.color);
     // Render gun and bullet with specular effects
     const objectsToRenderWithProgram2 = [
-        { obj: worldObjects.gun, translation: [2000, 1600, 4350], color: [0.8, 0.7, 0.5] },
-        { obj: worldObjects.bullet, translation: [2115, 1770, 4000], color: [0.8, 0.8, 0.8] },
+        { obj: worldObjects.gun, translation: [2000, 1600, 4350], color: [0.8, 0.7, 0.5], scale: [1, -1, 1]},
+        { obj: worldObjects.bullet, translation: [2115, 1770, 4000], color: [0.8, 0.8, 0.8], scale: [1, -1, 1]},
     ];
-    objectsToRenderWithProgram2.forEach(({ obj, translation, color }) => {
+    objectsToRenderWithProgram2.forEach(({ obj, translation, color, scale}) => {
         const modelMatrix = mat4.create();
         mat4.translate(modelMatrix, modelMatrix, translation);
         const normalMatrix = mat3.create();
         mat3.normalFromMat4(normalMatrix, modelMatrix);
         gl.uniformMatrix3fv(locations2.uniforms.normalMatrix, false, normalMatrix);
         gl.uniform3fv(locations2.uniforms.objectColor, color);    
-        placeObj(gl, obj, translation, { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations2, 0);
+        placeObj(gl, obj, translation, { angle: 0, axis: [0, 1, 0] }, scale, locations2, 0);
     });
 }
