@@ -1,3 +1,5 @@
+//levelBuilderGL.js
+
 import { calculateBoundingBox } from './groundMechanicsGL.js';
 
 export const groundPolygons = [];

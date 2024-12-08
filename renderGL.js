@@ -1,10 +1,10 @@
+//renderGL.js
+
 import { placeObj, drawRepeatingObj } from './levelBuilderGL.js';
 import { updateFloatingPlatformPosition } from './groundMechanicsGL.js';
 import { getLocations } from './utilsGL.js';
 
 export function renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, loopTime) {
-    // Set up WebGL state
-    // gl.clearColor(0.53*Math.cos(loopTime)*Math.cos(loopTime), 0.81*Math.cos(loopTime)*Math.cos(loopTime), 0.92* Math.cos(loopTime)*Math.cos(loopTime), 1.0); // Background color
     gl.clearColor(0, 0, 0, 1.0); // Background color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -82,7 +82,7 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     vec3.normalize(light2.direction, [Math.sin(loopTime), -Math.cos(loopTime), Math.sin(loopTime)]);
     gl.uniform3fv(locations2.uniforms.lightDirection, light2.direction);
     gl.uniform3fv(locations2.uniforms.lightColor, light2.color);
-    // Render gun and bullet with specular effects
+    // Render gun and bullet with bpd effects
     loopTime = loopTime*3
     const objectsToRenderWithProgram2 = [
         { obj: worldObjects.gun,     translation: [2120, 1770, 4550], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},    
