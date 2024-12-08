@@ -51,7 +51,7 @@ export async function loadModel(gl, filePath) {
 }
 
 export async function loadWorldObjects(gl) {
-    const cube = await loadModel(gl, './objects/cubeGL.json');
+    const cube = await loadModel(gl, './objects/cubeHPGL.json');
     const gun = await loadModel(gl, './objects/gunGL.json');
     const surface = await loadModel(gl, './objects/surfaceGL.json');
     const bullet = await loadModel(gl, './objects/bulletGL.json');
