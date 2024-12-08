@@ -38,9 +38,11 @@ export function getLocations(gl, program) {
             modelMatrix: gl.getUniformLocation(program, 'uModelMatrix'),
             viewMatrix: gl.getUniformLocation(program, 'uViewMatrix'),
             projectionMatrix: gl.getUniformLocation(program, 'uProjectionMatrix'),
+            normalMatrix: gl.getUniformLocation(program, 'uNormalMatrix'),
             lightDirection: gl.getUniformLocation(program, 'uLightDirection'),
             lightColor: gl.getUniformLocation(program, 'uLightColor'),
             objectColor: gl.getUniformLocation(program, 'uObjectColor'),
+            viewPosition: gl.getUniformLocation(program, 'uViewPosition'),
         },
     };
 }
