@@ -25,7 +25,6 @@ export async function loadModel(gl, filePath) {
         }
         const modelData = await response.json();
 
-        // Prepare buffers
         const vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.vertices), gl.STATIC_DRAW);
@@ -38,10 +37,17 @@ export async function loadModel(gl, filePath) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(modelData.indices), gl.STATIC_DRAW);
 
+        const texCoordBuffer = gl.createBuffer();
+        if (modelData.texCoords) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.texCoords), gl.STATIC_DRAW);
+        }
+
         return {
             vertexBuffer,
             normalBuffer,
             indexBuffer,
+            texCoordBuffer,
             vertexCount: modelData.indices.length,
         };
     } catch (error) {

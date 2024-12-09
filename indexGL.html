@@ -73,6 +73,30 @@
         }
     </script>
 
+    <script id="vertex-texture" type="x-shader/x-vertex">
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+        attribute vec2 aTexCoord;
+
+        uniform mat4 uModelMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uProjectionMatrix;
+        uniform mat3 uNormalMatrix;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        varying vec2 vTexCoord;
+
+        void main() {
+            vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
+            vPosition = worldPosition.xyz;
+            vNormal = normalize(uNormalMatrix * aNormal);
+            vTexCoord = aTexCoord;
+
+            gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+        }
+    </script>
+
     <script id="fragment-bpd" type="x-shader/x-fragment">
         precision mediump float;
         varying vec3 vNormal;       // Interpolated normal
@@ -122,6 +146,36 @@
         }
     </script>
     
+    <script id="fragment-texture" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        varying vec2 vTexCoord;
+
+        uniform vec3 uLightDirection;
+        uniform vec3 uLightColor;
+        uniform sampler2D uTexture;
+
+        void main() {
+            vec3 normalizedNormal = normalize(vNormal);
+            vec3 lightDir = normalize(-uLightDirection);
+
+            // Diffuse lighting
+            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0);
+            vec3 diffuse = diffuseStrength * uLightColor;
+
+            // Sample the texture
+            vec4 texColor = texture2D(uTexture, vTexCoord);
+
+            // Combine texture color with lighting
+            vec3 ambient = 0.1 * texColor.rgb; 
+            vec3 finalColor = (ambient + diffuse) * texColor.rgb;
+
+            gl_FragColor = vec4(finalColor, texColor.a);
+            //gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
+        }
+    </script>
 
     <script id="fragment-specular" type="x-shader/x-fragment">
         precision mediump float;

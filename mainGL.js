@@ -1,9 +1,9 @@
 // mainGL.js
 
-import { loadWorldObjects, getRailPath} from './worldLoaderGL.js';
-import { renderScene } from './renderGL.js';
-import { createShader, createProgram, getLocations } from './utilsGL.js';
-import { updateMovement, initiateJump } from './mechanicsGL.js';
+import {loadWorldObjects, getRailPath} from './worldLoaderGL.js';
+import {renderScene } from './renderGL.js';
+import {createShader, createProgram, loadTexture } from './utilsGL.js';
+import {updateMovement, initiateJump } from './mechanicsGL.js';
 
 async function main() {
     const canvas = document.getElementById('canvas');
@@ -24,16 +24,24 @@ async function main() {
     const worldObjects = await loadWorldObjects(gl);
     const railPath = await getRailPath();
     const vertexShaderSrc = document.getElementById(    'vertex-shader').text;
+    const vertexTexSrc    = document.getElementById(    'vertex-texture').text;
     const fragmentBPDSrc  = document.getElementById( 'fragment-bpd').text;
     const fragmentSpecSrc = document.getElementById('fragment-specular').text;
+    const fragmentTexSrc  = document.getElementById( 'fragment-texture').text;
 
     const vertexShader = createShader(gl,   gl.VERTEX_SHADER, vertexShaderSrc);
+    const vertexTex = createShader(gl,   gl.VERTEX_SHADER, vertexTexSrc);
     const fSBPD        = createShader(gl, gl.FRAGMENT_SHADER, fragmentBPDSrc);
     const fSSpecular   = createShader(gl, gl.FRAGMENT_SHADER, fragmentSpecSrc);
+    const fSTex        = createShader(gl, gl.FRAGMENT_SHADER, fragmentTexSrc);
     
-    // const program1 = createProgram(gl, vertexShader, fSBPD);
     const program1 = createProgram(gl, vertexShader, fSBPD);
     const program2 = createProgram(gl, vertexShader, fSBPD);
+    const program3 = createProgram(gl,    vertexTex, fSTex);
+
+    const groundTexture = loadTexture(gl, 'objects/ground.jpg');
+    const woodTexture = loadTexture(gl, 'objects/wood.jpg');
+    const objTexture = loadTexture(gl, 'objects/stairs.jpg');
 
     const camera = {
         position: vec3.fromValues(2000, 1900, 5000),
@@ -113,7 +121,7 @@ async function main() {
         loopTime += deltaTime;
         updateCameraTarget(); // Ensure the target updates on movement
 
-        renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, loopTime);
+        renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture);
         requestAnimationFrame(renderLoop);
     }
 

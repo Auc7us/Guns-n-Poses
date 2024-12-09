@@ -2,9 +2,9 @@
 
 import { placeObj, drawRepeatingObj } from './levelBuilderGL.js';
 import { updateFloatingPlatformPosition } from './groundMechanicsGL.js';
-import { getLocations } from './utilsGL.js';
+import { getLocations, getTexLocations } from './utilsGL.js';
 
-export function renderScene(gl, program1, program2, worldObjects, camera, projection, railPath, loopTime) {
+export function renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture) {
     gl.clearColor(0, 0, 0, 1.0); // Background color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -25,9 +25,9 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     // vec3.normalize(light.direction, [1 , 0, 0]);
     vec3.normalize(light.direction, [0.1 , -1, -0.8]);
     /*LIGHT DIRECTION REMEMBERRR
-    X Positive = Left to Right (light is on left)
-    Y Negative = Top to bottom (light is on top)
-    Z Negative = Front to back (light is behind you at the start)
+        X Positive = Left to Right (light is on left)
+        Y Negative = Top to bottom (light is on top)
+        Z Negative = Front to back (light is behind you at the start)
     */
     gl.uniform3fv(locations.uniforms.lightDirection, light.direction);
     gl.uniform3fv(locations.uniforms.lightColor, light.color);
@@ -49,26 +49,8 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
     const platformAngle = -Math.atan2(tangent.z, tangent.x);
     gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.25, 0.01]);
     // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
-    placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
-    // Render ground
-    gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.5, 0.5]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -19000, 1000, [-4000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, -38000, -56000, 1000, [18000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -3999, 1000, [4000, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -3999, 1000, [4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    // Render stairs
-    gl.uniform3fv(locations.uniforms.objectColor, [0.4, 0.4, 0.4]);
-    placeObj(gl, worldObjects.surface, [4000,    0,  -4000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 1000,  -7000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 2000, -10000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.surface, [4000, 3000, -13000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], locations, 0);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 1000,  -4000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-    drawRepeatingObj(gl, worldObjects.surface, locations, 0, -2999, 1000, [4000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1]);
-
-
+    // placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
+    
     // Program 2 Setup #########################################################################
     gl.useProgram(program2);
     const locations2 = getLocations(gl, program2);
@@ -101,6 +83,45 @@ export function renderScene(gl, program1, program2, worldObjects, camera, projec
         gl.uniform3fv(locations2.uniforms.objectColor, color);    
         placeObj(gl, obj, translation, rotation, scale, locations2, 0);
     });
+
+    // Render ground
+    gl.useProgram(program3);
+    const textureLocations = getTexLocations(gl, program3);
+    // Set uniform matrices for program3
+    gl.uniformMatrix4fv(textureLocations.uniforms.viewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(textureLocations.uniforms.projectionMatrix, false, projectionMatrix);
+    gl.uniform3fv(textureLocations.uniforms.lightDirection, light.direction);
+    gl.uniform3fv(textureLocations.uniforms.lightColor, light.color);
+    // Bind and activate the texture
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, groundTexture);
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0); // Ensure correct binding
+    // gl.uniform3fv(textureLocations.uniforms.objectColor, [0.5, 0.5, 0.5]);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [-4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -56000, 4000, [18000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    
+    gl.bindTexture(gl.TEXTURE_2D, woodTexture);
+    placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle+Math.PI/2, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], textureLocations, 1);
+
+    // Render stairs
+    gl.bindTexture(gl.TEXTURE_2D, objTexture);
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0); // Ensure correct binding
+    placeObj(gl, worldObjects.surface, [4000,    0,  -4000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
+    placeObj(gl, worldObjects.surface, [4000, 1000,  -7000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
+    placeObj(gl, worldObjects.surface, [4000, 2000, -10000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
+    placeObj(gl, worldObjects.surface, [4000, 3000, -13000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 1000,  -4000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
+    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 1000,  -4000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+
 }
 
 
