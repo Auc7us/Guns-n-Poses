@@ -4,7 +4,7 @@ import { placeObj, drawRepeatingObj } from './levelBuilderGL.js';
 import { updateFloatingPlatformPosition } from './groundMechanicsGL.js';
 import { getLocations, getTexLocations } from './utilsGL.js';
 
-export function renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture) {
+export function renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex) {
     gl.clearColor(0, 0, 0, 1.0); // Background color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -40,14 +40,14 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     placeObj(gl, worldObjects.cubeGate, [18000, 0, -53000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     // Track and Platform rendering
     gl.uniform3fv(locations.uniforms.objectColor, [0.7, 0.7, 0.7]);
-    placeObj(gl, worldObjects.lRail, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.rRail, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl,  worldObjects.lRail, [0, 0, 0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl,  worldObjects.rRail, [0, 0, 0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.bullet, [2115, 1770, 4000], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     const platformInfo = updateFloatingPlatformPosition(railPath);
     const { position, tangent } = platformInfo;
     const platX = position.x;
     const platZ = position.z;
     const platformAngle = -Math.atan2(tangent.z, tangent.x);
-    gl.uniform3fv(locations.uniforms.objectColor, [0.5, 0.25, 0.01]);
     // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
     // placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
     
@@ -76,7 +76,6 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
         { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+5*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
         { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+3*Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
         { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+7*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-        { obj: worldObjects.bullet,  translation: [2115, 1770, 4000], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.8, 0.8, 0.8]},
     ];
 
     objectsToRenderWithProgram2.forEach(({ obj, translation, rotation, scale, color}) => {
@@ -84,7 +83,9 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
         placeObj(gl, obj, translation, rotation, scale, locations2, 0);
     });
 
-    // Render ground
+    console.log(camera.position);
+
+    // Progam 3 Setup #############################################################################
     gl.useProgram(program3);
     const textureLocations = getTexLocations(gl, program3);
     // Set uniform matrices for program3
@@ -92,10 +93,19 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     gl.uniformMatrix4fv(textureLocations.uniforms.projectionMatrix, false, projectionMatrix);
     gl.uniform3fv(textureLocations.uniforms.lightDirection, light.direction);
     gl.uniform3fv(textureLocations.uniforms.lightColor, light.color);
+    gl.uniform3fv(textureLocations.uniforms.viewPosition, camera.position);
     // Bind and activate the texture
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, groundTexture);
-    gl.uniform1i(textureLocations.uniforms.uTexture, 0); // Ensure correct binding
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, nGroundTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+
     // gl.uniform3fv(textureLocations.uniforms.objectColor, [0.5, 0.5, 0.5]);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [-4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
@@ -103,12 +113,17 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
     
-    gl.bindTexture(gl.TEXTURE_2D, woodTexture);
-    placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle+Math.PI/2, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], textureLocations, 1);
-
     // Render stairs
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, objTexture);
-    gl.uniform1i(textureLocations.uniforms.uTexture, 0); // Ensure correct binding
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, nGroundTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
     placeObj(gl, worldObjects.surface, [4000,    0,  -4000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
     placeObj(gl, worldObjects.surface, [4000, 1000,  -7000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
     placeObj(gl, worldObjects.surface, [4000, 2000, -10000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
@@ -117,10 +132,21 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
-    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 1000,  -4000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    // drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [6000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
+    
+    //Platform
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, woodTexture);
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, nWoodTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+    placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle+Math.PI/2, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], textureLocations, 1);
+
+    
 
 }
 

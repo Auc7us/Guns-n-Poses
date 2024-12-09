@@ -61,9 +61,9 @@ export function getTexLocations(gl, program) {
             normalMatrix: gl.getUniformLocation(program, 'uNormalMatrix'),
             lightDirection: gl.getUniformLocation(program, 'uLightDirection'),
             lightColor: gl.getUniformLocation(program, 'uLightColor'),
-            objectColor: gl.getUniformLocation(program, 'uObjectColor'),
             viewPosition: gl.getUniformLocation(program, 'uViewPosition'),
             uTexture: gl.getUniformLocation(program, 'uTexture'),
+            uNormalMap: gl.getUniformLocation(program, 'uNormalMap'),
         },
     };
 }
@@ -90,7 +90,7 @@ export function loadTexture(gl, url) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
         gl.generateMipmap(gl.TEXTURE_2D); 
     };
-    
+
     image.src = url;
     return texture;
 }

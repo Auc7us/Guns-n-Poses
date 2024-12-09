@@ -155,26 +155,45 @@
 
         uniform vec3 uLightDirection;
         uniform vec3 uLightColor;
-        uniform sampler2D uTexture;
+        uniform vec3 uViewPosition;
+        uniform sampler2D uTexture;      // Diffuse texture
+        uniform sampler2D uNormalMap;    // Normal map
 
         void main() {
-            vec3 normalizedNormal = normalize(vNormal);
+            // Sample and decode the normal map
+            vec3 normalMap = texture2D(uNormalMap, vTexCoord).rgb;
+            vec3 tangentNormal = normalize(normalMap * 2.0 - 1.0); // Transform to [-1, 1]
+
+            // Combine with vertex normal (if needed, include TBN matrix for full transformation)
+            vec3 worldNormal = normalize(tangentNormal);
+
+            // Light direction and view direction
             vec3 lightDir = normalize(-uLightDirection);
+            vec3 viewDir = normalize(uViewPosition - vPosition);
 
             // Diffuse lighting
-            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0);
+            float diffuseStrength = max(dot(worldNormal, lightDir), 0.2); // Ensure minimum light
             vec3 diffuse = diffuseStrength * uLightColor;
 
-            // Sample the texture
+            // Specular lighting (Phong model)
+            vec3 reflectDir = reflect(-lightDir, worldNormal);
+            float shininess = 32.0;
+            float specularStrength = 0.5;
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+            vec3 specular = specularStrength * spec * uLightColor;
+
+            // Ambient light
+            float ambientStrength = 0.2; // Minimum ambient
+            vec3 ambient = ambientStrength * uLightColor;
+
+            // Texture sampling
             vec4 texColor = texture2D(uTexture, vTexCoord);
 
-            // Combine texture color with lighting
-            vec3 ambient = 0.1 * texColor.rgb; 
-            vec3 finalColor = (ambient + diffuse) * texColor.rgb;
-
+            // Final color
+            vec3 finalColor = texColor.rgb * (ambient + diffuse) + specular;
             gl_FragColor = vec4(finalColor, texColor.a);
-            //gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
         }
+
     </script>
 
     <script id="fragment-specular" type="x-shader/x-fragment">
