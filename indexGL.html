@@ -107,7 +107,7 @@
         uniform vec3 uObjectColor;     // Object base color
         uniform vec3 uViewPosition;    // Camera position (viewpoint)
 
-        const float reflectionStrength = 0.2; // Strength of reflection contribution
+        const float reflectionStrength = 0.07; // Strength of reflection contribution
 
         void main() {
             // Normalize inputs
@@ -172,18 +172,18 @@
             vec3 viewDir = normalize(uViewPosition - vPosition);
 
             // Diffuse lighting
-            float diffuseStrength = max(dot(worldNormal, lightDir), 0.2); // Ensure minimum light
+            float diffuseStrength = max(dot(worldNormal, lightDir), 0.0); // Ensure minimum light
             vec3 diffuse = diffuseStrength * uLightColor;
 
             // Specular lighting (Phong model)
             vec3 reflectDir = reflect(-lightDir, worldNormal);
             float shininess = 32.0;
-            float specularStrength = 0.5;
+            float specularStrength = 0.4;
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
             vec3 specular = specularStrength * spec * uLightColor;
 
             // Ambient light
-            float ambientStrength = 0.2; // Minimum ambient
+            float ambientStrength = 0.1; // Minimum ambient
             vec3 ambient = ambientStrength * uLightColor;
 
             // Texture sampling

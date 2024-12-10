@@ -42,7 +42,8 @@ async function main() {
     const groundTexture = loadTexture(gl, 'objects/ground.jpg');
     const woodTexture = loadTexture(gl, 'objects/wood.jpg');
     const objTexture = loadTexture(gl, 'objects/stairs.jpg');
-    const nGroundTex = loadTexture(gl, 'objects/ground-normal.jpg');
+    const nGroundTex = loadTexture(gl, 'objects/ground-normal1.jpg');
+    const nObjTex = loadTexture(gl, 'objects/stairs-normal.jpg');
     const nWoodTex = loadTexture(gl, 'objects/wood-normal.jpg');
 
     const camera = {
@@ -123,7 +124,7 @@ async function main() {
         loopTime += deltaTime;
         updateCameraTarget(); // Ensure the target updates on movement
 
-        renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex);
+        renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex);
         requestAnimationFrame(renderLoop);
     }
 
