@@ -1,3 +1,5 @@
+#made using chatGPT
+
 import struct
 import json
 import numpy as np

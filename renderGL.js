@@ -6,7 +6,7 @@ import {getLocations, getTexLocations} from './utilsGL.js';
 import {transformGunMatrix} from './mechanicsGL.js';
 
 export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF) {
-    gl.clearColor(0, 0, 0, 1.0); // Background color
+    gl.clearColor(0, 0, 0, 1.0); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
