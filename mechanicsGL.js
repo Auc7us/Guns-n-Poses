@@ -3,7 +3,6 @@
 export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
-    // Calculate forward (W/S) and strafe (A/D) directions
     const forwardVector = {
         x: Math.sin(yaw),
         z: -Math.cos(yaw),
@@ -13,7 +12,6 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
         z: Math.sin(yaw),
     };
 
-    // Movement logic
     if (keysPressed['w']) {
         ego.x += forwardVector.x * pace;
         ego.z += forwardVector.z * pace;
@@ -37,7 +35,7 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
     if (ego.z < 0) {
         groundY = getHeightAtPosition(ego.x, ego.z, playerFeetY, absGround);
         // groundY = 0;
-
+        // console.log(groundY);
         if (!isNaN(groundY) && playerFeetY < groundY) {
             // Land on the ground
             ego.y = groundY + 1900; // snap him to ground
@@ -96,6 +94,56 @@ export function freeFall(ego, gravity, groundY, deltaTime) {
 
 export function getHeightAtPosition(x, z, playerFeetY, absGround) {
     // Placeholder function for ground height detection
-    // Replace this with your collision/ground detection logic
-    return absGround; // Default ground height
+    // I should replace this with  collision/ground detection
+    return absGround; // Default ground height currently set in mainGL
+}
+
+export function transformGunMatrix(cameraPosition, yawPitch) {
+    const modelMatrix = mat4.create();
+    mat4.translate(modelMatrix, modelMatrix, [cameraPosition[0],cameraPosition[1], cameraPosition[2]]);
+    const rotationMatrix = mat4.create();
+    mat4.rotateY(rotationMatrix, rotationMatrix, -yawPitch.yaw); // Yaw
+    mat4.rotateX(rotationMatrix, rotationMatrix, -yawPitch.pitch); // Pitch
+    mat4.multiply(modelMatrix, modelMatrix, rotationMatrix);
+    mat4.translate(modelMatrix, modelMatrix, [ 120, -130, -450]);
+    return modelMatrix;
+}
+
+export function shoot(isCharged, ego, bullets, bulletObject, yawPitch, chargedBulletScale) {
+    // const scale = isCharged ? chargedBulletScale : 1;
+    const scale = 3;
+
+    const gunBarrelOffset = vec3.fromValues(120, -130, -450);// this is a bit off need to work on this
+    const startPosition = vec3.create();
+
+    const rotationMatrix = mat4.create();
+    mat4.rotateY(rotationMatrix, rotationMatrix, -yawPitch.yaw);
+    mat4.rotateX(rotationMatrix, rotationMatrix, -yawPitch.pitch);
+    vec3.transformMat4(startPosition, gunBarrelOffset, rotationMatrix);
+    vec3.add(startPosition, startPosition, [ego.x, ego.y, ego.z]);
+
+    const direction = vec3.fromValues(0, 0, -1); 
+    vec3.transformMat4(direction, direction, rotationMatrix);
+    vec3.normalize(direction, direction);
+
+    bullets.push({
+        position: { x: startPosition[0], y: startPosition[1], z: startPosition[2] },
+        direction: { x: direction[0], y: direction[1], z: direction[2] },
+        scale,
+    });
+}
+
+export function updateBullets(bullets, deltaTime, bulletSpeed, maxDistance, ego) {
+    bullets.forEach((bullet, index) => {
+        bullet.position.x += bullet.direction.x * bulletSpeed;
+        bullet.position.y += bullet.direction.y * bulletSpeed;
+        bullet.position.z += bullet.direction.z * bulletSpeed;
+        if (
+            Math.abs(bullet.position.x - ego.x) > maxDistance ||
+            Math.abs(bullet.position.y - ego.y) > maxDistance ||
+            Math.abs(bullet.position.z - ego.z) > maxDistance
+        ) {
+            bullets.splice(index, 1);
+        }
+    });
 }

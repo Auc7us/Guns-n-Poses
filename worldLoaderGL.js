@@ -1,5 +1,4 @@
 // worldLoader.js
-// Load WebGL-ready models and prepare buffers
 
 import { CurveSegment} from './utils.js';
 

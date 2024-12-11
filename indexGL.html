@@ -23,14 +23,54 @@
         .controls h1 {
             font-size: 22px;
         }
+        #cooldown-container {
+            position: absolute;
+            bottom: 20px;
+            left: 42%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 40px; 
+            background-color: rgb(37, 33, 33);
+            border: 2px solid black;
+            border-radius: 5px;
+            overflow: hidden;
+            z-index: 100; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 0; 
+        }
+
+        #cooldown-label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px; 
+            color: white;
+        }
+
+        #cooldownBar {
+            width: 0%;
+            height: 20px;
+            background-color: rgb(143, 5, 5);
+            border-radius: 3px;
+            transition: width 0.1s linear;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas" width="1600" height="900"></canvas>
+    <div id="cooldown-container">
+        <span id="cooldown-label">Weapon Cooldown</span>
+        <div id="cooldownBar"></div>
+    </div>    
     <div class="controls">
         <!-- <label for="slider1">Mouse Sensitivity:</label>
         <input id="slider1" type="range" min="1" max="10" /> -->
-        
+        <label for="rateOfFireSlider">Rate of Fire:</label>
+        <input id="rateOfFireSlider" type="range" min="0.03" max="3" step="0.01" value="0.5">
+        <p>Rate of Fire: <span id="rateOfFireValue">0.5</span> seconds</p>
+
         <label for="fovSlider">Field of View:</label>
         <input id="fovSlider" type="range" min="55" max="95" step="1" value="65">
         <p>FOV: <span id="fovValue">65</span>°</p>
@@ -44,8 +84,8 @@
             <li><strong>Shift</strong>: Sprint</li>
             <!-- <li><strong>C</strong>: Crouch</li> -->
             <li><strong>Space</strong>: Jump</li>
-            <!-- <li><strong>Left Mouse Button</strong>: Shoot</li>
-            <li><strong>Right Mouse Button</strong>: Charged Shot</li>
+            <li><strong>Left Mouse Button</strong>: Shoot</li>
+            <!-- <li><strong>Right Mouse Button</strong>: Charged Shot</li>
             <li><strong>V</strong>: Display Path</li> -->
         </ul>
         <p><strong>Instructions:</strong> Click on the game to take pointer control. Press <strong>Esc</strong> to exit pointer control.</p>
@@ -95,6 +135,19 @@
 
             gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
         }
+    </script>
+
+    <script id="vertex-gun" type="x-shader/x-vertex">
+        attribute vec3 aPosition;
+
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uModelMatrix;
+
+        void main() {
+            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
+        }
+
     </script>
 
     <script id="fragment-bpd" type="x-shader/x-fragment">
@@ -196,49 +249,13 @@
 
     </script>
 
-    <script id="fragment-specular" type="x-shader/x-fragment">
+    <script id="fragment-gun" type="x-shader/x-fragment">
         precision mediump float;
-        
-        varying vec3 vNormal;       // Interpolated normal
-        varying vec3 vPosition;     // Position in world space
-        
-        uniform vec3 uLightDirection;  // Light direction
-        uniform vec3 uLightColor;      // Light color
-        uniform vec3 uObjectColor;     // Object base color
-        uniform vec3 uViewPosition;    // Camera position (viewpoint)
-        
-        void main() {
-            // Normalize inputs
-            vec3 normalizedNormal = normalize(vNormal);
-            vec3 lightDir = normalize(-uLightDirection); // Light direction normalized
-            vec3 viewDir = normalize(uViewPosition - vPosition); // Direction to viewer
-            
-            // Ambient component
-            float ambientStrength = 0.12; // Ambient strength
-            vec3 ambient = ambientStrength * uLightColor;
-    
-            // Diffuse component
-            float diffuseStrength = max(dot(normalizedNormal, lightDir), 0.0); // Prevent negative diffuse
-            vec3 diffuse = diffuseStrength * uLightColor;
-    
-            // Specular component
-            vec3 reflectDir = reflect(lightDir, normalizedNormal); // Reflected light direction
-            float shininess = 100.0; // Shininess factor
-            float specularStrength = 6.0; // Boost specular intensity
-            float spec = 0.0;
-            if (diffuseStrength > 0.0) {
-                spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess); // Specular term
-            }
-            vec3 specular = specularStrength * spec * uLightColor;
-    
-            // Combine lighting components
-            vec3 finalColor = (ambient + diffuse + specular) * uObjectColor;
-    
-            gl_FragColor = vec4(finalColor, 1.0);
-            //gl_FragColor = vec4(normalizedNormal * 0.5 + 0.5, 1.0); // Debug line
-            //gl_FragColor = vec4(vPosition * 0.5 + 0.5, 1.0);
-            //gl_FragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
 
+        uniform vec3 uObjectColor;
+
+        void main() {
+            gl_FragColor = vec4(uObjectColor, 1.0);
         }
     </script>
 

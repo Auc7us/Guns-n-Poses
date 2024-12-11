@@ -65,7 +65,7 @@ function calculateYAtXZ(x, z, vertices) {
 
     if (B === 0) {
         console.warn("Plane is vertical, can't compute y from x and z alone.");
-        return NaN; // Cannot calculate Y for a vertical plane
+        return NaN;
     }
 
     return -(A * x + C * z + D) / B;

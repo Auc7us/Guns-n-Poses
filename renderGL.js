@@ -1,10 +1,11 @@
 //renderGL.js
 
-import { placeObj, drawRepeatingObj } from './levelBuilderGL.js';
-import { updateFloatingPlatformPosition } from './groundMechanicsGL.js';
-import { getLocations, getTexLocations } from './utilsGL.js';
+import {placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle} from './levelBuilderGL.js';
+import {updateFloatingPlatformPosition} from './groundMechanicsGL.js';
+import {getLocations, getTexLocations} from './utilsGL.js';
+import {transformGunMatrix} from './mechanicsGL.js';
 
-export function renderScene(gl, program1, program2, program3, worldObjects, camera, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex) {
+export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF) {
     gl.clearColor(0, 0, 0, 1.0); // Background color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -35,14 +36,14 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     //Program 1 Objects ##########################################################################
     // Cubes gates
     gl.uniform3fv(locations.uniforms.objectColor, [0.9, 0.2, 0.1]);
-    placeObj(gl, worldObjects.cubeGate, [0, 0, 0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl, worldObjects.cubeGate, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     gl.uniform3fv(locations.uniforms.objectColor, [0, 0.9, 0.9]);
     placeObj(gl, worldObjects.cubeGate, [18000, 0, -53000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     // Track and Platform rendering
     gl.uniform3fv(locations.uniforms.objectColor, [0.7, 0.7, 0.7]);
-    placeObj(gl,  worldObjects.lRail, [0, 0, 0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl,  worldObjects.rRail, [0, 0, 0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
-    placeObj(gl, worldObjects.bullet, [2115, 1770, 4000], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl,  worldObjects.lRail, [   0,    0,    0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    placeObj(gl,  worldObjects.rRail, [   0,    0,    0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
+    // placeObj(gl, worldObjects.bullet, [2115, 1770, 4000], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     const platformInfo = updateFloatingPlatformPosition(railPath);
     const { position, tangent } = platformInfo;
     const platX = position.x;
@@ -66,65 +67,58 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     gl.uniform3fv(locations2.uniforms.lightDirection, light.direction);
     gl.uniform3fv(locations2.uniforms.lightColor, light2.color);
     // Render gun and bullet with bpd effects
-    loopTime = loopTime*3
-    const objectsToRenderWithProgram2 = [
-        { obj: worldObjects.gun,     translation: [2120, 1770, 4550], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},    
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:             loopTime, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:   loopTime+Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:   loopTime+Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+3*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle:     loopTime+Math.PI, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+5*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+3*Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-        { obj: worldObjects.fMuzzle, translation: [2120, 1770, 4550], rotation: { angle: loopTime+7*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.23]},
-    ];
+    const animTime = loopTime;
+    let animSpeed = 0;
+    if (shootingF == 1){ 
+        animSpeed = 1/ fireRate;
+    } else { animSpeed = 0;}
 
-    objectsToRenderWithProgram2.forEach(({ obj, translation, rotation, scale, color}) => {
-        gl.uniform3fv(locations2.uniforms.objectColor, color);    
-        placeObj(gl, obj, translation, rotation, scale, locations2, 0);
+    const gunMatrix = transformGunMatrix(camera.position, yawPitch);
+    gl.uniform3fv(locations2.uniforms.objectColor, [0.83, 0.67, 0.23]);
+    placeWeapon(gl, worldObjects.gun, gunMatrix, {angle: 0, axis: [0, 1, 0]}, locations2, 0);
+    
+    const muzzleObjects = genFloatingMuzzle(worldObjects.fMuzzle, [0, 0, 1], [0.83, 0.67, 0.23], 8, animSpeed, animTime);
+    muzzleObjects.forEach(({ obj, rotation, color }) => {
+        gl.uniform3fv(locations2.uniforms.objectColor, color);
+        const muzzleMatrix = mat4.clone(gunMatrix);
+        placeWeapon(gl, obj, muzzleMatrix, rotation, locations2, 0);
     });
 
-    console.log(camera.position);
+    bullets.forEach((bullet) => {
+        const bulletMatrix = mat4.create();
+        mat4.translate(bulletMatrix, bulletMatrix, [bullet.position.x, bullet.position.y, bullet.position.z]);
+        mat4.scale(bulletMatrix, bulletMatrix, [bullet.scale, bullet.scale, bullet.scale]);
+        gl.uniformMatrix4fv(locations2.uniforms.modelMatrix, false, bulletMatrix);
+        gl.uniform3fv(locations2.uniforms.objectColor, [1,1,1]);
+        placeWeapon(gl, worldObjects.bullet, bulletMatrix, { angle: 0, axis: [0, 1, 0] }, locations2, 0);
+    });
 
-    // Progam 3 Setup #############################################################################
+    // Program 3 Setup #############################################################################
     gl.useProgram(program3);
     const textureLocations = getTexLocations(gl, program3);
-    // Set uniform matrices for program3
     gl.uniformMatrix4fv(textureLocations.uniforms.viewMatrix, false, viewMatrix);
     gl.uniformMatrix4fv(textureLocations.uniforms.projectionMatrix, false, projectionMatrix);
     gl.uniform3fv(textureLocations.uniforms.lightDirection, light.direction);
     gl.uniform3fv(textureLocations.uniforms.lightColor, light.color);
     gl.uniform3fv(textureLocations.uniforms.viewPosition, camera.position);
-    // Bind and activate the texture
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, groundTexture);
-    gl.uniform1i(textureLocations.uniforms.uTexture, 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, nGroundTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
 
-    // gl.uniform3fv(textureLocations.uniforms.objectColor, [0.5, 0.5, 0.5]);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0, -19000, 4000, [-4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -56000, 4000, [18000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,      0,  -3999, 4000, [ 4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 4], 1);
-    
-    // Render stairs
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, objTexture);
+    // Ground Texture
+    bindTexture(gl, gl.TEXTURE0, groundTexture);
     gl.uniform1i(textureLocations.uniforms.uTexture, 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, nObjTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    bindTexture(gl, gl.TEXTURE1, nGroundTex, {wrapS: gl.REPEAT, wrapT: gl.REPEAT, minFilter: gl.LINEAR, magFilter: gl.LINEAR});
     gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+    // Ground Objects
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-19000, 4000, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-19000, 4000, [-4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -56000, 4000, [18000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [ 4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [ 4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    // Stairs Texture
+    bindTexture(gl, gl.TEXTURE0, objTexture);
+    gl.uniform1i(textureLocations.uniforms.uTexture, 0);
+    bindTexture(gl, gl.TEXTURE1, nObjTex, {wrapS: gl.REPEAT, wrapT: gl.REPEAT, minFilter: gl.LINEAR, magFilter: gl.LINEAR});
+    gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+    // Stairs Objects
     placeObj(gl, worldObjects.surface, [4000,    0,  -4000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
     placeObj(gl, worldObjects.surface, [4000, 1000,  -7000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
     placeObj(gl, worldObjects.surface, [4000, 2000, -10000], { angle: -Math.PI / 2, axis: [1, 0, 0] }, [1, -1, 1], textureLocations, 1);
@@ -133,32 +127,14 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 2000,  -7000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 3000, -10000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
     drawRepeatingObj(gl, worldObjects.surface, textureLocations, 0, -2999, 4000, [4000, 4000, -13000], { angle: 0, axis: [0, 1, 0] }, [1, -4, 3], 1);
-    
-    //Platform
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, woodTexture);
+    // Platform Texture
+    bindTexture(gl, gl.TEXTURE0, woodTexture);
     gl.uniform1i(textureLocations.uniforms.uTexture, 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, nWoodTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    bindTexture(gl, gl.TEXTURE1, nWoodTex, {wrapS: gl.REPEAT, wrapT: gl.REPEAT, minFilter: gl.LINEAR, magFilter: gl.LINEAR});
     gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+    // Platform Object
     placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], textureLocations, 1);
-
-    
 
 }
 
 
-// { obj: worldObjects.gun,     translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle:                    0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle:             loopTime, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle:     loopTime+Math.PI, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle:   loopTime+Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle:   loopTime+Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle: loopTime+3*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle: loopTime+5*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle: loopTime+3*Math.PI/2, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.fMuzzle, translation: [120+wpnXOff, -130+wpnYOff, -450+wpnZOff], rotation: { angle: loopTime+7*Math.PI/4, axis: [0, 0, 1] }, scale: [1, -1, 1], color: [0.83, 0.67, 0.3]},
-//         { obj: worldObjects.bullet,  translation: [115+wpnXOff, -130+wpnYOff, -1000+wpnZOff], rotation: { angle:                   0, axis: [0, 1, 0] }, scale: [1, -1, 1], color: [0.8, 0.8, 0.8]},
