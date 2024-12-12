@@ -62,7 +62,7 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     } else { animSpeed = 0;}
 
     const gunMatrix = transformGunMatrix(camera.position, yawPitch);
-    gl.uniform3fv(locations.uniforms.objectColor, [0.83, 0.67, 0.23]);
+    gl.uniform3fv(locations.uniforms.objectColor, [0.83, 0.67, 0.3]);
     placeWeapon(gl, worldObjects.gun, gunMatrix, {angle: 0, axis: [0, 1, 0]}, locations, 0);
 
     fMuzHeight = 10* Math.sqrt(0.7/ fireRate);
