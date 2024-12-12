@@ -38,7 +38,7 @@ export function placeObj(gl, obj, translation, rotation, scale, locations, isGro
             transformedVertices.push([transformedVec[0], transformedVec[1], transformedVec[2]]);
         }
         const boundingBox = calculateBoundingBox(transformedVertices);
-        groundPolygons.push({ vertices: transformedVertices, boundingBox });
+        groundPolygons.push({ boundingBox });
     }
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
     gl.drawElements(gl.TRIANGLES, obj.vertexCount, gl.UNSIGNED_SHORT, 0);

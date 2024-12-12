@@ -1,6 +1,8 @@
 //mechanicsGL.js
 
 import {updateFloatingPlatformPosition, getHeightAtPosition } from './groundMechanicsGL.js';
+import { groundPolygons } from './levelBuilderGL.js';
+
 export let floatingPlatformInfo = { position: { x: 0, y: 0, z: 0 }, tangent: { x: 0, y: 0, z: 0 } };
 
 export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround, railPath) {
@@ -63,6 +65,36 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
     }
 
     floatingPlatformInfo = updateFloatingPlatformPosition(railPath);
+    if (ego.onGround) {
+        const { position, tangent } = floatingPlatformInfo;
+        const platX = position.x;
+        const platZ = position.z;
+
+        const platformRadius = 3200;
+        const dx = ego.x - platX;
+        const dz = ego.z - platZ;
+        const distanceFromPlatformCenter = Math.sqrt(dx * dx + dz * dz);
+        console.log(distanceFromPlatformCenter);
+        
+        if (distanceFromPlatformCenter <= platformRadius) {
+            
+            if (ego.lastPlatformX === null || ego.lastPlatformZ === null) {
+                ego.lastPlatformX = platX;
+                ego.lastPlatformZ = platZ;
+            }
+            const deltaX = platX - ego.lastPlatformX;
+            const deltaZ = platZ - ego.lastPlatformZ;
+
+            ego.x += deltaX;
+            ego.z += deltaZ;
+            ego.lastPlatformX = platX;
+            ego.lastPlatformZ = platZ;
+
+        } else {
+            ego.lastPlatformX = null;
+            ego.lastPlatformZ = null;
+        }
+    }
 
 }
 

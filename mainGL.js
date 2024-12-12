@@ -75,6 +75,8 @@ async function main() {
         isJumping: false,
         isFreeFalling: false,
         onGround: true,
+        lastPlatformX: null,
+        lastPlatformZ: null 
     };
 
     const projection = {

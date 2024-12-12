@@ -95,9 +95,9 @@ export function getHeightAtPosition(x, z, playerFeetY, absGround) {
     // console.log("Checking ground polygons...");
     groundPolygons.forEach(({ boundingBox }) => {
         if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
-            console.log("Bounding Box:", boundingBox);
+            // console.log("Bounding Box:", boundingBox);
             const groundHeight = boundingBox.maxY;
-            console.log(groundHeight);
+            // console.log(groundHeight);
 
             if (groundHeight <= playerFeetY || groundHeight - playerFeetY <= 1000) {
                 retVal = groundHeight;
