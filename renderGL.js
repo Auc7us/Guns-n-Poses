@@ -112,11 +112,18 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     bindTexture(gl, gl.TEXTURE1, nGroundTex, {wrapS: gl.REPEAT, wrapT: gl.REPEAT, minFilter: gl.LINEAR, magFilter: gl.LINEAR});
     gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
     // Ground Objects
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-19000, 4000, [    0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-19000, 4000, [-4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -56000, 4000, [18000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [ 4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
-    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [ 4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-19000, 4000, [     0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-55000, 4000, [ -4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-55000, 4000, [ -8000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0,-55000, 4000, [-12000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [ 18000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [ 14000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [ 10000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [  6000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [  2000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations, -38000, -55000, 4000, [     0, 0,      0], { angle: 0, axis: [0, 1, 0] }, [0.5, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [  4000, 0,      0], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
+    drawRepeatingObj(gl, worldObjects.surface, textureLocations,       0, -3999, 4000, [  4000, 0, -16000], { angle: 0, axis: [0, 1, 0] }, [1, -1, 4], 1);
     // Stairs Texture
     bindTexture(gl, gl.TEXTURE0, objTexture);
     gl.uniform1i(textureLocations.uniforms.uTexture, 0);
