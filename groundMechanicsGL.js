@@ -1,3 +1,5 @@
+//groundMechanics.js
+
 import { groundPolygons } from './levelBuilderGL.js';
 
 let platformPositionT = 0;
@@ -64,29 +66,44 @@ function calculateYAtXZ(x, z, vertices) {
     const D = -(A * p1[0] + B * p1[1] + C * p1[2]);
 
     if (B === 0) {
-        console.warn("Plane is vertical, can't compute y from x and z alone.");
+        console.error("Plane is vertical, can't compute y from x and z alone.");
         return NaN;
     }
 
     return -(A * x + C * z + D) / B;
 }
 
+// export function getHeightAtPosition(x, z, playerFeetY, absGround) {
+//     let retVal = absGround;
+//     console.log("Ground Polygons Structure:", JSON.stringify(groundPolygons, null, 2));
+
+//     groundPolygons.forEach(({ vertices, boundingBox }) => {
+//         if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
+//             const yAtXZ = calculateYAtXZ(x, z, vertices);
+            
+//             if (!isNaN(yAtXZ) && (yAtXZ >= playerFeetY || playerFeetY - yAtXZ <= 1000)) {
+//                 retVal = yAtXZ;
+//             }
+//         }
+//     });
+
+//     return retVal;
+// }
+
 export function getHeightAtPosition(x, z, playerFeetY, absGround) {
     let retVal = absGround;
-
-    groundPolygons.forEach(({ vertices, boundingBox }) => {
+    // console.log("Checking ground polygons...");
+    groundPolygons.forEach(({ boundingBox }) => {
         if (x >= boundingBox.minX && x <= boundingBox.maxX && z >= boundingBox.minZ && z <= boundingBox.maxZ) {
-            const yAtXZ = calculateYAtXZ(x, z, vertices);
-            if (!isNaN(yAtXZ) && (yAtXZ >= playerFeetY || playerFeetY - yAtXZ <= 1000)) {
-                retVal = yAtXZ;
+            console.log("Bounding Box:", boundingBox);
+            const groundHeight = boundingBox.maxY;
+            console.log(groundHeight);
+
+            if (groundHeight >= playerFeetY || playerFeetY - groundHeight <= 1000) {
+                retVal = groundHeight;
             }
         }
     });
 
     return retVal;
 }
-
-export function calculateBoundingBoxGL(vertices) {
-    return calculateBoundingBox(vertices);
-}
-

@@ -30,10 +30,16 @@ export function placeObj(gl, obj, translation, rotation, scale, locations, isGro
         gl.bindBuffer(gl.ARRAY_BUFFER, obj.texCoordBuffer);
         gl.enableVertexAttribArray(locations.attributes.texCoord);
         gl.vertexAttribPointer(locations.attributes.texCoord, 2, gl.FLOAT, false, 0, 0);
-        // const boundingBox = calculateBoundingBox(obj.vertices);
-        // groundPolygons.push({ vertices: obj.vertices, boundingBox });
+        const transformedVertices = [];
+        for (const vertex of obj.vertices) {
+            const vec = vec4.fromValues(vertex[0], vertex[1], vertex[2], 1);
+            const transformedVec = vec4.create();
+            vec4.transformMat4(transformedVec, vec, modelMatrix);
+            transformedVertices.push([transformedVec[0], transformedVec[1], transformedVec[2]]);
+        }
+        const boundingBox = calculateBoundingBox(transformedVertices);
+        groundPolygons.push({ vertices: transformedVertices, boundingBox });
     }
-
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
     gl.drawElements(gl.TRIANGLES, obj.vertexCount, gl.UNSIGNED_SHORT, 0);
 

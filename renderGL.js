@@ -1,6 +1,6 @@
 //renderGL.js
 
-import {placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle, placeMuzzle} from './levelBuilderGL.js';
+import {groundPolygons, placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle, placeMuzzle} from './levelBuilderGL.js';
 import {updateFloatingPlatformPosition} from './groundMechanicsGL.js';
 import {getLocations, getTexLocations} from './utilsGL.js';
 import {transformGunMatrix} from './mechanicsGL.js';
@@ -11,6 +11,8 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     gl.clearColor(0, 0, 0, 1.0); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+
+    groundPolygons.length = 0;
 
     const viewMatrix = mat4.create();
     const projectionMatrix = mat4.create();

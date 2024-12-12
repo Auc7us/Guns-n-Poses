@@ -1,5 +1,7 @@
 //mechanicsGL.js
 
+import { getHeightAtPosition } from './groundMechanicsGL.js';
+
 export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
@@ -34,8 +36,6 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
     // Ground collision detection
     if (ego.z < 0) {
         groundY = getHeightAtPosition(ego.x, ego.z, playerFeetY, absGround);
-        // groundY = 0;
-        // console.log(groundY);
         if (!isNaN(groundY) && playerFeetY < groundY) {
             // Land on the ground
             ego.y = groundY + 1900; // snap him to ground
@@ -88,13 +88,6 @@ export function freeFall(ego, gravity, groundY, deltaTime) {
         ego.y = groundY + 1900;
         ego.velocityY = 0;
     }
-}
-
-
-export function getHeightAtPosition(x, z, playerFeetY, absGround) {
-    // Placeholder function for ground height detection
-    // I should replace this with  collision/ground detection
-    return absGround; // Default ground height currently set in mainGL
 }
 
 export function transformGunMatrix(cameraPosition, yawPitch) {

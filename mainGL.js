@@ -10,7 +10,7 @@ async function main() {
     const gl = canvas.getContext('webgl');
     const gravity = -9800; //mm per sec
     const jumpHeight = 5000; //mm
-    const absGround = 0; //-4000;
+    const absGround = -2000; //-4000;
     const groundY = 0;
     const deltaTime = 0.016; // ~60 FPS
     const speed = 90; //mm per frame is 1/60 seconds
@@ -153,7 +153,7 @@ async function main() {
     function updateCooldownBar(cooldownPercentage) {
         const cooldownBar = document.getElementById('cooldownBar');
         cooldownPercentage = cooldownPercentage * 100;
-        console.log(cooldownPercentage);
+        // console.log(cooldownPercentage);
         if (cooldownBar) {
             cooldownBar.style.width = `${cooldownPercentage}%`;
         }
@@ -172,7 +172,7 @@ async function main() {
             }
             if ((loopTime - wpnUseStartTime) < wpnSustaindedModeTime){
                 fireRate = 0.4/(loopTime - wpnUseStartTime+0.5);
-                console.log(fireRate);
+                // console.log(fireRate);
                 shoot(false, ego, bullets, yawPitch, fireRate, loopTime);
                 lastBulletFiredTime = loopTime;
                 shootingF = 1;
@@ -199,7 +199,9 @@ async function main() {
 
         loopTime += deltaTime;
         updateCameraTarget();
-        renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, mouseClicked, mouseDownF);
+        renderScene( gl, program1, program2,      program3, worldObjects,       camera,   yawPitch,
+             projection, railPath, loopTime, groundTexture,  woodTexture,   objTexture, 
+             nGroundTex, nWoodTex,  nObjTex,       bullets,     fireRate, mouseClicked, mouseDownF);
         
         updateCooldownBar(cooldownPercentage);
         

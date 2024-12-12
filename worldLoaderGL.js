@@ -42,12 +42,18 @@ export async function loadModel(gl, filePath) {
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.texCoords), gl.STATIC_DRAW);
         }
 
+        const vertices3D = [];
+        for (let i = 0; i < modelData.vertices.length; i += 3) {
+            vertices3D.push([modelData.vertices[i], modelData.vertices[i + 1], modelData.vertices[i + 2]]);
+        }
+
         return {
             vertexBuffer,
             normalBuffer,
             indexBuffer,
             texCoordBuffer,
             vertexCount: modelData.indices.length,
+            vertices: vertices3D,
         };
     } catch (error) {
         console.error(`Error loading model: ${error}`);
