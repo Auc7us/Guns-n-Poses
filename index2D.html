@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="description" content="A fun, interactive JavaScript FPS game with customizable mouse sensitivity and intuitive controls.">
+    <meta charset="utf-8">
+    <title>Guns N' Poses</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            margin: 0;
+            padding: 0;
+        }
+        #canvas {
+            border: 3px solid #000;
+        }
+        .controls {
+            margin-left: 30px;
+            margin-top: 30px;
+            font-size: 18px; 
+        }
+        .controls h1 {
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="1600" height="900"></canvas>
+    <div class="controls">
+        <label for="slider1">Mouse Sensitivity:</label>
+        <input id="slider1" type="range" min="1" max="10" />
+        
+        <label for="fovSlider">Field of View:</label>
+        <input id="fovSlider" type="range" min="55" max="95" step="1" value="65">
+        <p>FOV: <span id="fovValue">65</span>°</p>
+
+        <h1>Game Controls</h1>
+        <ul>
+            <li><strong>W</strong>: Walk Forward</li>
+            <li><strong>S</strong>: Walk Backward</li>
+            <li><strong>A</strong>: Move Left</li>
+            <li><strong>D</strong>: Move Right</li>
+            <li><strong>Shift</strong>: Sprint</li>
+            <li><strong>C</strong>: Crouch</li>
+            <li><strong>Space</strong>: Jump</li>
+            <li><strong>Left Mouse Button (Hold)</strong>: Rifle Shoot</li>
+            <li><strong>Right Mouse Button (Click)</strong>: Single Heavy Shot</li>
+            <li><strong>Right Mouse Button (Hold)</strong>: Charged Heavy Shot</li>
+            <li><strong>V</strong>: Display Platform Path</li>
+
+        </ul>
+        <p><strong>Instructions:</strong> Click on the game to take pointer control. Press <strong>Esc</strong> to exit pointer control.</p>
+        <p><strong>Note:</strong> Floor/ Ground mechanics are <strong>under active developement</strong> and havent been added. Hit box mechanics will also be added in the future</p>
+    </div>
+
+    <!-- Use type="module" to enable ES6 modules -->
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', function() {
+            const fovSlider = document.getElementById('fovSlider');
+            const fovValueDisplay = document.getElementById('fovValue');
+            
+            // Set the initial FOV value
+            fovValueDisplay.textContent = fovSlider.value;
+
+            // Update FOV value when slider is moved
+            fovSlider.addEventListener('input', function() {
+                fovValueDisplay.textContent = this.value;
+            });
+        });
+    </script>
+
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <script type="module" src="main.js"></script>
+    <script type="module" src="worldLoader.js"></script>
+    <script type="module" src="render.js"></script>
+    <script type="module" src="groundMechanics.js"></script>
+    <script type="module" src="mechanics.js"></script>
+    <script type="module" src="utils.js"></script>
+</body>
+</html>
