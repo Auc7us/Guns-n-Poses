@@ -16,13 +16,17 @@ async function main() {
     const deltaTime = 0.016; // ~60 FPS
     let loopTime = 0;
     let bullets = [];
-    const bulletSpeed = 2000;
+    const bulletSpeed = 5000;
     const maxBulletDistance = 50000;
-    let isShooting = false;
+    let mouseClicked = false;
     const chargedBulletScale = 1;
-    let fireRate = 0.5; //burst of bullets per second
-    let lastShotTime = 0; 
+    let fireRate = 0.25; //burst of bullets per second
+    let lastBulletFiredTime = 0; 
     let shootingF = 0;
+    let prevIsShooting = 0;
+    let wpnUseStartTime = 0;
+    let coolDownStartTime = 0;
+    let coolDownTime = 0;
 
     if (!gl) {
         console.error('WebGL not supported!');
@@ -33,22 +37,17 @@ async function main() {
     const railPath = await getRailPath();
     const vertexShaderSrc = document.getElementById(    'vertex-shader').text;
     const vertexTexSrc    = document.getElementById(    'vertex-texture').text;
-    const vertexGunSrc    = document.getElementById(    'vertex-gun').text;
     const fragmentBPDSrc  = document.getElementById( 'fragment-bpd').text;
-    const fragmentGunSrc = document.getElementById('fragment-gun').text;
     const fragmentTexSrc  = document.getElementById( 'fragment-texture').text;
 
     const vertexShader = createShader(gl,   gl.VERTEX_SHADER, vertexShaderSrc);
     const vertexTex = createShader(gl,   gl.VERTEX_SHADER, vertexTexSrc);
-    const vertexGun = createShader(gl,   gl.VERTEX_SHADER, vertexGunSrc);
     const fSBPD        = createShader(gl, gl.FRAGMENT_SHADER, fragmentBPDSrc);
-    const fSGun  = createShader(gl, gl.FRAGMENT_SHADER, fragmentGunSrc);
     const fSTex        = createShader(gl, gl.FRAGMENT_SHADER, fragmentTexSrc);
     
     const program1 = createProgram(gl, vertexShader, fSBPD);
     const program2 = createProgram(gl, vertexShader, fSBPD);
     const program3 = createProgram(gl,    vertexTex, fSTex);
-    const program4 = createProgram(gl,    vertexGun, fSGun);
 
     const groundTexture = loadTexture(gl, 'objects/ground.jpg');
     const woodTexture = loadTexture(gl, 'objects/wood.jpg');
@@ -124,12 +123,12 @@ async function main() {
 
     canvas.addEventListener('mousedown', (event) => {
         if (event.button === 0) { 
-            isShooting = true;
+            mouseClicked = true;
         }
     });
     canvas.addEventListener('mouseup', (event) => {
         if (event.button === 0) {
-            isShooting = false;
+            mouseClicked = false;
         }
     });
 
@@ -140,7 +139,7 @@ async function main() {
     }
 
     function getCooldownPercentage() {
-        return Math.min(1, (loopTime - lastShotTime) / fireRate);
+        return Math.min(1, (loopTime - lastBulletFiredTime) / fireRate);
     }
 
     function updateCooldownBar() {
@@ -159,27 +158,41 @@ async function main() {
                 console.log("Fire Rate Updated:", fireRate); 
             });
         } else {
-            console.error("Rate of Fire slider or display not found in DOM!");
+            console.error("Rate of Fire slider or display not found!");
         }
 
-        if (isShooting && (loopTime - lastShotTime) >= fireRate) {
-            shoot(false, ego, bullets, worldObjects.bullet, yawPitch, chargedBulletScale);
-            lastShotTime = loopTime;
-            shootingF = 1;
+        if (loopTime > 2 && loopTime - coolDownStartTime < 2 && mouseClicked == true){
+            mouseClicked = false;
+        }
+
+        if (mouseClicked && (loopTime - lastBulletFiredTime) >= fireRate) {
+            if (prevIsShooting == 0){
+                wpnUseStartTime = loopTime;
+            }
+            
+            if ((loopTime - wpnUseStartTime) < 4){
+                shoot(false, ego, bullets, yawPitch, fireRate, loopTime);
+                lastBulletFiredTime = loopTime;
+                shootingF = 1;
+            } else {
+                coolDownStartTime = loopTime;
+            }
+            
         } else{
             shootingF = 0;
         }
-        shootingF = shootingF * isShooting;
+        prevIsShooting = mouseClicked;
 
+        console.log(loopTime - coolDownStartTime, wpnUseStartTime);
         updateMovement(ego, gravity, keysPressed, yawPitch.yaw, speed, deltaTime, groundY, absGround);
-        updateBullets(bullets, deltaTime, bulletSpeed, maxBulletDistance, ego);
+        updateBullets(bullets, bulletSpeed, maxBulletDistance, ego);
         camera.position[0] = ego.x;
         camera.position[1] = ego.y;
         camera.position[2] = ego.z;
 
         loopTime += deltaTime;
         updateCameraTarget();
-        renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF);
+        renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, mouseClicked);
         
         updateCooldownBar();
         

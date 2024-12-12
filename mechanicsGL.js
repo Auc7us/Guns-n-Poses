@@ -109,20 +109,22 @@ export function transformGunMatrix(cameraPosition, yawPitch) {
     return modelMatrix;
 }
 
-export function shoot(isCharged, ego, bullets, bulletObject, yawPitch, chargedBulletScale) {
+export function shoot(isCharged, ego, bullets, yawPitch, fireRate, loopTime) {
     // const scale = isCharged ? chargedBulletScale : 1;
-    const scale = 3;
+    const scale = 0.5;
 
-    const gunBarrelOffset = vec3.fromValues(120, -130, -450);// this is a bit off need to work on this
-    const startPosition = vec3.create();
+    const gunBarrelOffset = vec3.fromValues(120, -130, -1750);// this is a bit off need to work on this
+    const startPosition = vec3.fromValues(ego.x, ego.y, ego.z);
 
     const rotationMatrix = mat4.create();
     mat4.rotateY(rotationMatrix, rotationMatrix, -yawPitch.yaw);
     mat4.rotateX(rotationMatrix, rotationMatrix, -yawPitch.pitch);
+    
     vec3.transformMat4(startPosition, gunBarrelOffset, rotationMatrix);
     vec3.add(startPosition, startPosition, [ego.x, ego.y, ego.z]);
 
-    const direction = vec3.fromValues(0, 0, -1); 
+    // const direction = vec3.fromValues( (0.005/fireRate) * Math.sin(loopTime), 0, -1); 
+    const direction = vec3.fromValues( 0, 0, -1); 
     vec3.transformMat4(direction, direction, rotationMatrix);
     vec3.normalize(direction, direction);
 
@@ -130,10 +132,11 @@ export function shoot(isCharged, ego, bullets, bulletObject, yawPitch, chargedBu
         position: { x: startPosition[0], y: startPosition[1], z: startPosition[2] },
         direction: { x: direction[0], y: direction[1], z: direction[2] },
         scale,
+        rotationMatrix: mat4.clone(rotationMatrix)
     });
 }
 
-export function updateBullets(bullets, deltaTime, bulletSpeed, maxDistance, ego) {
+export function updateBullets(bullets, bulletSpeed, maxDistance, ego) {
     bullets.forEach((bullet, index) => {
         bullet.position.x += bullet.direction.x * bulletSpeed;
         bullet.position.y += bullet.direction.y * bulletSpeed;

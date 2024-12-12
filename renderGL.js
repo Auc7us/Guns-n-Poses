@@ -24,7 +24,8 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     // const light = {direction: vec3.normalize([], [1, 2, -2]), color: [1, 1, 1]};
     const light = {direction: vec3.create(), color: [1, 1, 1]};
     // vec3.normalize(light.direction, [1 , 0, 0]);
-    vec3.normalize(light.direction, [0.4 * Math.cos(loopTime*0.5) , -1* Math.cos(loopTime*0.5)* Math.cos(loopTime*0.5), -0.4* Math.sin(loopTime*0.5)]);
+    const lightTime = 0;//loopTime;
+    vec3.normalize(light.direction, [0.4 * Math.cos(lightTime*0.5) , -1* Math.cos(lightTime*0.5)* Math.cos(lightTime*0.5), -0.4* Math.sin(lightTime*0.5)]);
     /*LIGHT DIRECTION REMEMBERRR
         X Positive = Left to Right (light is on left)
         Y Negative = Top to bottom (light is on top)
@@ -60,17 +61,13 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     gl.uniformMatrix4fv(locations2.uniforms.projectionMatrix, false, projectionMatrix);
     gl.uniform3fv(locations2.uniforms.viewPosition, camera.position);
     // Set light for program2
-    const light2 = {direction: vec3.create(), color: [1, 1, 1]};
-    // loopTime = 0;
-    vec3.normalize(light2.direction, [Math.sin(loopTime), -Math.cos(loopTime), Math.sin(loopTime)]);
-    // gl.uniform3fv(locations2.uniforms.lightDirection, light2.direction);
     gl.uniform3fv(locations2.uniforms.lightDirection, light.direction);
-    gl.uniform3fv(locations2.uniforms.lightColor, light2.color);
+    gl.uniform3fv(locations2.uniforms.lightColor, light.color);
     // Render gun and bullet with bpd effects
     const animTime = loopTime;
     let animSpeed = 0;
     if (shootingF == 1){ 
-        animSpeed = 1/ fireRate;
+        animSpeed = 3 / fireRate;
     } else { animSpeed = 0;}
 
     const gunMatrix = transformGunMatrix(camera.position, yawPitch);
@@ -87,7 +84,8 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     bullets.forEach((bullet) => {
         const bulletMatrix = mat4.create();
         mat4.translate(bulletMatrix, bulletMatrix, [bullet.position.x, bullet.position.y, bullet.position.z]);
-        mat4.scale(bulletMatrix, bulletMatrix, [bullet.scale, bullet.scale, bullet.scale]);
+        mat4.multiply(bulletMatrix, bulletMatrix, bullet.rotationMatrix);
+        mat4.scale(bulletMatrix, bulletMatrix, [bullet.scale, bullet.scale, 700]);
         gl.uniformMatrix4fv(locations2.uniforms.modelMatrix, false, bulletMatrix);
         gl.uniform3fv(locations2.uniforms.objectColor, [1,1,1]);
         placeWeapon(gl, worldObjects.bullet, bulletMatrix, { angle: 0, axis: [0, 1, 0] }, locations2, 0);
