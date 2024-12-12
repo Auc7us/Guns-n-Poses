@@ -26,7 +26,7 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     // const light = {direction: vec3.normalize([], [1, 2, -2]), color: [1, 1, 1]};
     const light = {direction: vec3.create(), color: [1, 1, 1]};
     // vec3.normalize(light.direction, [1 , 0, 0]);
-    const lightTime = 0;//loopTime;
+    const lightTime = loopTime;
     vec3.normalize(light.direction, [0.4 * Math.cos(lightTime*0.5) , -1* Math.cos(lightTime*0.5)* Math.cos(lightTime*0.5), -0.4* Math.sin(lightTime*0.5)]);
     /*LIGHT DIRECTION REMEMBERRR
         X Positive = Left to Right (light is on left)
@@ -55,17 +55,6 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
     // placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
     
-    // Program 2 Setup #########################################################################
-    gl.useProgram(program2);
-    const locations2 = getLocations(gl, program2);
-    // Set uniform matrices for program2
-    gl.uniformMatrix4fv(locations2.uniforms.viewMatrix, false, viewMatrix);
-    gl.uniformMatrix4fv(locations2.uniforms.projectionMatrix, false, projectionMatrix);
-    gl.uniform3fv(locations2.uniforms.viewPosition, camera.position);
-    // Set light for program2
-    gl.uniform3fv(locations2.uniforms.lightDirection, light.direction);
-    gl.uniform3fv(locations2.uniforms.lightColor, light.color);
-    // Render gun and bullet with bpd effects
     const animTime = loopTime;
     let animSpeed = 0;
     if (shootingF == 1){ 
@@ -73,21 +62,29 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     } else { animSpeed = 0;}
 
     const gunMatrix = transformGunMatrix(camera.position, yawPitch);
-    gl.uniform3fv(locations2.uniforms.objectColor, [0.83, 0.67, 0.23]);
-    placeWeapon(gl, worldObjects.gun, gunMatrix, {angle: 0, axis: [0, 1, 0]}, locations2, 0);
+    gl.uniform3fv(locations.uniforms.objectColor, [0.83, 0.67, 0.23]);
+    placeWeapon(gl, worldObjects.gun, gunMatrix, {angle: 0, axis: [0, 1, 0]}, locations, 0);
 
     fMuzHeight = 10* Math.sqrt(0.7/ fireRate);
-    if (!mouseDownF)
-    {
-        fMuzHeight = 0;
-    }
+    if (!mouseDownF){fMuzHeight = 0}
     
     const muzzleObjects = genFloatingMuzzle(worldObjects.fMuzzle, [0, 0, 1], [0.83, 0.67, 0.23], 8, animSpeed, animTime);
     muzzleObjects.forEach(({ obj, rotation, color }) => {
-        gl.uniform3fv(locations2.uniforms.objectColor, color);
+        gl.uniform3fv(locations.uniforms.objectColor, color);
         const muzzleMatrix = transformGunMatrix(camera.position, yawPitch);
-        placeMuzzle(gl, obj, muzzleMatrix, [0, 15 - fMuzHeight,0], rotation, locations2, 0);
+        placeMuzzle(gl, obj, muzzleMatrix, [0, 15 - fMuzHeight,0], rotation, locations, 0);
     });
+
+    // Program 2 Setup #########################################################################
+    gl.useProgram(program2);
+    const locations2 = getLocations(gl, program2);
+    // Set uniform matrices for program2
+    gl.uniformMatrix4fv(locations2.uniforms.viewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(locations2.uniforms.projectionMatrix, false, projectionMatrix);
+    gl.uniform3fv(locations2.uniforms.viewPosition, camera.position);
+    gl.uniform3fv(locations2.uniforms.lightDirection, light.direction);
+    light.color = [0.8,0.5,0]
+    gl.uniform3fv(locations2.uniforms.lightColor, light.color);
 
     bullets.forEach((bullet) => {
         const bulletMatrix = mat4.create();
@@ -100,6 +97,7 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     });
 
     // Program 3 Setup #############################################################################
+    light.color = [1,1,1]
     gl.useProgram(program3);
     const textureLocations = getTexLocations(gl, program3);
     gl.uniformMatrix4fv(textureLocations.uniforms.viewMatrix, false, viewMatrix);

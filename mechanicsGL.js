@@ -121,7 +121,7 @@ export function transformGunMatrix(cameraPosition, yawPitch) {
 
 export function shoot(isCharged, ego, bullets, yawPitch, fireRate, loopTime) {
     // const scale = isCharged ? chargedBulletScale : 1;
-    const scale = 0.5;
+    const scale = 0.7;
 
     const gunBarrelOffset = vec3.fromValues(120, -130, -1750);// this is a bit off need to work on this
     const startPosition = vec3.fromValues(ego.x, ego.y, ego.z);
