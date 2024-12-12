@@ -1,11 +1,13 @@
 //renderGL.js
 
-import {placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle} from './levelBuilderGL.js';
+import {placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle, placeMuzzle} from './levelBuilderGL.js';
 import {updateFloatingPlatformPosition} from './groundMechanicsGL.js';
 import {getLocations, getTexLocations} from './utilsGL.js';
 import {transformGunMatrix} from './mechanicsGL.js';
 
-export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF) {
+let fMuzHeight = 0;
+
+export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF, mouseDownF) {
     gl.clearColor(0, 0, 0, 1.0); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -67,18 +69,24 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     const animTime = loopTime;
     let animSpeed = 0;
     if (shootingF == 1){ 
-        animSpeed = 3 / fireRate;
+        animSpeed = 1.5 / fireRate;
     } else { animSpeed = 0;}
 
     const gunMatrix = transformGunMatrix(camera.position, yawPitch);
     gl.uniform3fv(locations2.uniforms.objectColor, [0.83, 0.67, 0.23]);
     placeWeapon(gl, worldObjects.gun, gunMatrix, {angle: 0, axis: [0, 1, 0]}, locations2, 0);
+
+    fMuzHeight = 10* Math.sqrt(0.7/ fireRate);
+    if (!mouseDownF)
+    {
+        fMuzHeight = 0;
+    }
     
     const muzzleObjects = genFloatingMuzzle(worldObjects.fMuzzle, [0, 0, 1], [0.83, 0.67, 0.23], 8, animSpeed, animTime);
     muzzleObjects.forEach(({ obj, rotation, color }) => {
         gl.uniform3fv(locations2.uniforms.objectColor, color);
-        const muzzleMatrix = mat4.clone(gunMatrix);
-        placeWeapon(gl, obj, muzzleMatrix, rotation, locations2, 0);
+        const muzzleMatrix = transformGunMatrix(camera.position, yawPitch);
+        placeMuzzle(gl, obj, muzzleMatrix, [0, 15 - fMuzHeight,0], rotation, locations2, 0);
     });
 
     bullets.forEach((bullet) => {

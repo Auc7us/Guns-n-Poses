@@ -55,7 +55,6 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
         ego.isFreeFalling = false;
     }
 
-    // Handle vertical movement (jump or free fall)
     if (ego.isJumping) {
         jump(ego, gravity, deltaTime); // Gravity is negative
     } else if (ego.isFreeFalling) {
@@ -108,6 +107,17 @@ export function transformGunMatrix(cameraPosition, yawPitch) {
     mat4.translate(modelMatrix, modelMatrix, [ 120, -130, -450]);
     return modelMatrix;
 }
+
+// export function transformMuzMatrix(cameraPosition, height = 20, yawPitch) {
+//     const modelMatrix = mat4.create();
+//     mat4.translate(modelMatrix, modelMatrix, [cameraPosition[0], cameraPosition[1], cameraPosition[2]]);
+//     const rotationMatrix = mat4.create();
+//     mat4.rotateY(rotationMatrix, rotationMatrix, -yawPitch.yaw); // Yaw
+//     mat4.rotateX(rotationMatrix, rotationMatrix, -yawPitch.pitch); // Pitch
+//     mat4.multiply(modelMatrix, modelMatrix, rotationMatrix);
+//     mat4.translate(modelMatrix, modelMatrix, [ 120, -130 + height, -450]);
+//     return modelMatrix;
+// }
 
 export function shoot(isCharged, ego, bullets, yawPitch, fireRate, loopTime) {
     // const scale = isCharged ? chargedBulletScale : 1;

@@ -45,6 +45,7 @@ export function placeWeapon(gl, obj, modelMatrix, rotation, locations,  hasTex =
     if (inWorldSpace) { 
         mat4.scale(modelMatrix, modelMatrix, [1, -1, 1]);
     }
+ 
     mat4.rotate(modelMatrix, modelMatrix, rotation.angle, rotation.axis);
     
     mat3.normalFromMat4(normalMatrix, modelMatrix);
@@ -94,12 +95,33 @@ export function bindTexture(gl, textureUnit, texture, parameters = {}) {
     if (parameters.magFilter !== undefined) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, parameters.magFilter);
 }
 
+
+//old version that saved position of the muzzle objects
+// export function genFloatingMuzzle(obj, baseRotationAxis, baseColor, numObjects, speedMultiplier, loopTime) {
+
+//     if (prevPosMuzzle === null) {
+//         prevPosMuzzle = speedMultiplier * loopTime;
+//     }
+//     let posMuzzle = (speedMultiplier === 0) ? prevPosMuzzle : prevPosMuzzle + (speedMultiplier * (loopTime - prevPosMuzzle / speedMultiplier));
+//     const objects = [];
+//     for (let i = 0; i < numObjects; i++) {
+//         const angle = posMuzzle + (i * 2 * Math.PI / numObjects); 
+//         objects.push({
+//             obj: obj,
+//             rotation: { angle: angle, axis: baseRotationAxis },
+//             color: baseColor,
+//         });
+//     }
+//     if (speedMultiplier !== 0) {
+//         prevPosMuzzle = posMuzzle;
+//     }
+
+//     return objects;
+// }
+
 export function genFloatingMuzzle(obj, baseRotationAxis, baseColor, numObjects, speedMultiplier, loopTime) {
 
-    if (prevPosMuzzle === null) {
-        prevPosMuzzle = speedMultiplier * loopTime;
-    }
-    let posMuzzle = (speedMultiplier === 0) ? prevPosMuzzle : prevPosMuzzle + (speedMultiplier * (loopTime - prevPosMuzzle / speedMultiplier));
+    const posMuzzle = speedMultiplier * loopTime; 
     const objects = [];
     for (let i = 0; i < numObjects; i++) {
         const angle = posMuzzle + (i * 2 * Math.PI / numObjects); 
@@ -109,13 +131,42 @@ export function genFloatingMuzzle(obj, baseRotationAxis, baseColor, numObjects, 
             color: baseColor,
         });
     }
-    if (speedMultiplier !== 0) {
-        prevPosMuzzle = posMuzzle;
-    }
 
     return objects;
 }
 
+export function placeMuzzle(gl, obj, modelMatrix, translation, rotation, locations,  hasTex = false, inWorldSpace = true) {
+    
+    const normalMatrix = mat3.create();
+    if (inWorldSpace) { 
+        mat4.scale(modelMatrix, modelMatrix, [1, -1, 1]);
+    }
 
+    mat4.rotate(modelMatrix, modelMatrix, rotation.angle, rotation.axis);
+    mat4.translate(modelMatrix, modelMatrix, translation); 
+    
+    mat3.normalFromMat4(normalMatrix, modelMatrix);
+    
+    gl.uniformMatrix4fv(locations.uniforms.modelMatrix, false, modelMatrix);
+    gl.uniformMatrix3fv(locations.uniforms.normalMatrix, false, normalMatrix);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBuffer);
+    gl.enableVertexAttribArray(locations.attributes.position);
+    gl.vertexAttribPointer(locations.attributes.position, 3, gl.FLOAT, false, 0, 0);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.normalBuffer);
+    gl.enableVertexAttribArray(locations.attributes.normal);
+    gl.vertexAttribPointer(locations.attributes.normal, 3, gl.FLOAT, false, 0, 0);
+
+    if (hasTex) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, obj.texCoordBuffer);
+        gl.enableVertexAttribArray(locations.attributes.texCoord);
+        gl.vertexAttribPointer(locations.attributes.texCoord, 2, gl.FLOAT, false, 0, 0);
+    }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
+    gl.drawElements(gl.TRIANGLES, obj.vertexCount, gl.UNSIGNED_SHORT, 0);
+
+}
 
 

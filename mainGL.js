@@ -26,7 +26,8 @@ async function main() {
     let prevIsShooting = 0;
     let wpnUseStartTime = 0;
     let coolDownStartTime = 0;
-    let coolDownTime = 0;
+    let mouseDownF = 0;
+    let cooldownPercentage = 0;
 
     if (!gl) {
         console.error('WebGL not supported!');
@@ -36,8 +37,8 @@ async function main() {
     const worldObjects = await loadWorldObjects(gl);
     const railPath = await getRailPath();
     const vertexShaderSrc = document.getElementById(    'vertex-shader').text;
-    const vertexTexSrc    = document.getElementById(    'vertex-texture').text;
-    const fragmentBPDSrc  = document.getElementById( 'fragment-bpd').text;
+    const vertexTexSrc    = document.getElementById(   'vertex-texture').text;
+    const fragmentBPDSrc  = document.getElementById(     'fragment-bpd').text;
     const fragmentTexSrc  = document.getElementById( 'fragment-texture').text;
 
     const vertexShader = createShader(gl,   gl.VERTEX_SHADER, vertexShaderSrc);
@@ -124,11 +125,13 @@ async function main() {
     canvas.addEventListener('mousedown', (event) => {
         if (event.button === 0) { 
             mouseClicked = true;
+            mouseDownF = 1;
         }
     });
     canvas.addEventListener('mouseup', (event) => {
         if (event.button === 0) {
             mouseClicked = false;
+            mouseDownF = 0;
         }
     });
 
@@ -139,41 +142,38 @@ async function main() {
     }
 
     function getCooldownPercentage() {
-        return Math.min(1, (loopTime - lastBulletFiredTime) / fireRate);
+        if(shootingF)return Math.min(1,(loopTime - wpnUseStartTime) / 4);
+        else   return Math.min(1, 1 - ((loopTime - coolDownStartTime) / 2));
     }
 
-    function updateCooldownBar() {
+    function updateCooldownBar(cooldownPercentage) {
         const cooldownBar = document.getElementById('cooldownBar');
+        cooldownPercentage = cooldownPercentage * 100;
+        console.log(cooldownPercentage);
         if (cooldownBar) {
-            const percentage = getCooldownPercentage() * 100;
-            cooldownBar.style.width = `${percentage}%`;
+            cooldownBar.style.width = `${cooldownPercentage}%`;
         }
     }
 
     function renderLoop() {
-        if (rateOfFireSlider && rateOfFireValueDisplay) {
-            rateOfFireSlider.addEventListener('input', (event) => {
-                fireRate = parseFloat(event.target.value); 
-                rateOfFireValueDisplay.textContent = fireRate.toFixed(2); 
-                console.log("Fire Rate Updated:", fireRate); 
-            });
-        } else {
-            console.error("Rate of Fire slider or display not found!");
-        }
 
-        if (loopTime > 2 && loopTime - coolDownStartTime < 2 && mouseClicked == true){
+        if (loopTime > 2 && loopTime - coolDownStartTime < 2 ){
             mouseClicked = false;
+            cooldownPercentage =  Math.min(1, 1 - ((loopTime - coolDownStartTime) / 2));
         }
 
         if (mouseClicked && (loopTime - lastBulletFiredTime) >= fireRate) {
             if (prevIsShooting == 0){
                 wpnUseStartTime = loopTime;
             }
-            
-            if ((loopTime - wpnUseStartTime) < 4){
+            if ((loopTime - wpnUseStartTime) < 5){
+                fireRate = 0.4/(loopTime - wpnUseStartTime+0.5);
+                console.log(fireRate);
                 shoot(false, ego, bullets, yawPitch, fireRate, loopTime);
                 lastBulletFiredTime = loopTime;
                 shootingF = 1;
+                cooldownPercentage = Math.min(1,(loopTime - wpnUseStartTime) / 4);
+
             } else {
                 coolDownStartTime = loopTime;
             }
@@ -181,9 +181,12 @@ async function main() {
         } else{
             shootingF = 0;
         }
-        prevIsShooting = mouseClicked;
+        if (!mouseDownF && (loopTime - wpnUseStartTime) < 5){
+            cooldownPercentage = 0;
+        }
 
-        console.log(loopTime - coolDownStartTime, wpnUseStartTime);
+        prevIsShooting = mouseClicked;
+        // console.log(loopTime - coolDownStartTime, wpnUseStartTime);
         updateMovement(ego, gravity, keysPressed, yawPitch.yaw, speed, deltaTime, groundY, absGround);
         updateBullets(bullets, bulletSpeed, maxBulletDistance, ego);
         camera.position[0] = ego.x;
@@ -192,9 +195,9 @@ async function main() {
 
         loopTime += deltaTime;
         updateCameraTarget();
-        renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, mouseClicked);
+        renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, mouseClicked, mouseDownF);
         
-        updateCooldownBar();
+        updateCooldownBar(cooldownPercentage);
         
         requestAnimationFrame(renderLoop);
     }
