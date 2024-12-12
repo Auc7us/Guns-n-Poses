@@ -99,7 +99,7 @@ export function getHeightAtPosition(x, z, playerFeetY, absGround) {
             const groundHeight = boundingBox.maxY;
             console.log(groundHeight);
 
-            if (groundHeight >= playerFeetY || playerFeetY - groundHeight <= 1000) {
+            if (groundHeight <= playerFeetY || groundHeight - playerFeetY <= 1000) {
                 retVal = groundHeight;
             }
         }

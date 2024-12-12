@@ -1,13 +1,12 @@
 //renderGL.js
 
 import {groundPolygons, placeObj, placeWeapon, drawRepeatingObj, bindTexture, genFloatingMuzzle, placeMuzzle} from './levelBuilderGL.js';
-import {updateFloatingPlatformPosition} from './groundMechanicsGL.js';
 import {getLocations, getTexLocations} from './utilsGL.js';
-import {transformGunMatrix} from './mechanicsGL.js';
+import {transformGunMatrix, floatingPlatformInfo} from './mechanicsGL.js';
 
 let fMuzHeight = 0;
 
-export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, railPath, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF, mouseDownF) {
+export function renderScene(gl, program1, program2, program3, worldObjects, camera, yawPitch, projection, loopTime, groundTexture, woodTexture, objTexture, nGroundTex, nWoodTex, nObjTex, bullets, fireRate, shootingF, mouseDownF) {
     gl.clearColor(0, 0, 0, 1.0); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -49,13 +48,6 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     placeObj(gl,  worldObjects.lRail, [   0,    0,    0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     placeObj(gl,  worldObjects.rRail, [   0,    0,    0], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
     // placeObj(gl, worldObjects.bullet, [2115, 1770, 4000], {angle: 0, axis: [0, 1, 0] }, [1, -1, 1], locations, 0);
-    const platformInfo = updateFloatingPlatformPosition(railPath);
-    const { position, tangent } = platformInfo;
-    const platX = position.x;
-    const platZ = position.z;
-    const platformAngle = -Math.atan2(tangent.z, tangent.x);
-    // placeObj(gl, worldObjects.platform, [platX, 150, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.2, -1.2, 1.2], locations, 0);
-    // placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], locations, 0);
     
     const animTime = loopTime;
     let animSpeed = 0;
@@ -145,6 +137,12 @@ export function renderScene(gl, program1, program2, program3, worldObjects, came
     gl.uniform1i(textureLocations.uniforms.uTexture, 0);
     bindTexture(gl, gl.TEXTURE1, nWoodTex, {wrapS: gl.REPEAT, wrapT: gl.REPEAT, minFilter: gl.LINEAR, magFilter: gl.LINEAR});
     gl.uniform1i(textureLocations.uniforms.uNormalMap, 1);
+
+    const { position, tangent } = floatingPlatformInfo;
+    const platX = position.x;
+    const platZ = position.z;
+    const platformAngle = -Math.atan2(tangent.z, tangent.x);
+
     // Platform Object
     placeObj(gl, worldObjects.cube, [platX, 100, platZ], { angle: platformAngle, axis: [0, 1, 0] }, [1.5, -0.02, 1.5], textureLocations, 1);
 

@@ -1,8 +1,9 @@
 //mechanicsGL.js
 
-import { getHeightAtPosition } from './groundMechanicsGL.js';
+import {updateFloatingPlatformPosition, getHeightAtPosition } from './groundMechanicsGL.js';
+export let floatingPlatformInfo = { position: { x: 0, y: 0, z: 0 }, tangent: { x: 0, y: 0, z: 0 } };
 
-export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround) {
+export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime, groundY, absGround, railPath) {
     const pace = keysPressed['shift'] ? speed * 1.5 : speed;
 
     const forwardVector = {
@@ -60,6 +61,9 @@ export function updateMovement(ego, gravity, keysPressed, yaw, speed, deltaTime,
     } else if (ego.isFreeFalling) {
         freeFall(ego, gravity, groundY, deltaTime);
     }
+
+    floatingPlatformInfo = updateFloatingPlatformPosition(railPath);
+
 }
 
 export function initiateJump(ego, jumpHeight, gravity) {

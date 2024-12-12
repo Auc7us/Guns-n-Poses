@@ -10,7 +10,7 @@ async function main() {
     const gl = canvas.getContext('webgl');
     const gravity = -9800; //mm per sec
     const jumpHeight = 5000; //mm
-    const absGround = -2000; //-4000;
+    const absGround = -4000; //-4000;
     const groundY = 0;
     const deltaTime = 0.016; // ~60 FPS
     const speed = 90; //mm per frame is 1/60 seconds
@@ -191,7 +191,7 @@ async function main() {
 
         prevMouseClicked = mouseClicked;
         // console.log(loopTime - coolDownStartTime, wpnUseStartTime);
-        updateMovement(ego, gravity, keysPressed, yawPitch.yaw, speed, deltaTime, groundY, absGround);
+        updateMovement(ego, gravity, keysPressed, yawPitch.yaw, speed, deltaTime, groundY, absGround, railPath);
         updateBullets(bullets, bulletSpeed, clippingDist, ego);
         camera.position[0] = ego.x;
         camera.position[1] = ego.y;
@@ -199,9 +199,9 @@ async function main() {
 
         loopTime += deltaTime;
         updateCameraTarget();
-        renderScene( gl, program1, program2,      program3, worldObjects,       camera,   yawPitch,
-             projection, railPath, loopTime, groundTexture,  woodTexture,   objTexture, 
-             nGroundTex, nWoodTex,  nObjTex,       bullets,     fireRate, mouseClicked, mouseDownF);
+        renderScene( gl,      program1,     program2,     program3, worldObjects,   camera,   yawPitch, projection,
+               loopTime, groundTexture,  woodTexture,   objTexture,   nGroundTex, nWoodTex,
+                nObjTex,       bullets,     fireRate, mouseClicked,  mouseDownF);
         
         updateCooldownBar(cooldownPercentage);
         
